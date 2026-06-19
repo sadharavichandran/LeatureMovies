@@ -1,0 +1,6 @@
+{
+  "name": "Leature Movies",
+  "description": "Premium real-time Movie Ticket Booking application with custom admin dashboard and real-time seat configuration and sales booking analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
