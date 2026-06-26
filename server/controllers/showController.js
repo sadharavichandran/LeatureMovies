@@ -42,7 +42,7 @@ const showController = {
 
   async bookSeats(req, res) {
     try {
-      const { seatNumbers } = req.body;
+      const { seatNumbers, parkingSeatNumbers = [] } = req.body;
       const show = await Show.findById(req.params.id);
 
       if (!show) {
@@ -54,7 +54,12 @@ const showController = {
       }
 
       const newBookedSeats = [...show.bookedSeats, ...seatNumbers];
-      const updatedShow = await Show.updateBookedSeats(req.params.id, newBookedSeats);
+      let updatedShow = await Show.updateBookedSeats(req.params.id, newBookedSeats);
+
+      if (parkingSeatNumbers && parkingSeatNumbers.length > 0) {
+        const newBookedParkingSeats = [...(updatedShow.bookedParkingSeats || []), ...parkingSeatNumbers];
+        updatedShow = await Show.updateBookedParkingSeats(req.params.id, newBookedParkingSeats);
+      }
 
       const io = req.app.get('io');
       if (io) io.emit('show_updated', updatedShow);
@@ -68,7 +73,7 @@ const showController = {
 
   async releaseSeats(req, res) {
     try {
-      const { seatNumbers } = req.body;
+      const { seatNumbers, parkingSeatNumbers = [] } = req.body;
       const show = await Show.findById(req.params.id);
 
       if (!show) {
@@ -77,7 +82,12 @@ const showController = {
 
       // Remove the seats from bookedSeats
       const newBookedSeats = show.bookedSeats.filter(seat => !seatNumbers.includes(seat));
-      const updatedShow = await Show.updateBookedSeats(req.params.id, newBookedSeats);
+      let updatedShow = await Show.updateBookedSeats(req.params.id, newBookedSeats);
+
+      if (parkingSeatNumbers && parkingSeatNumbers.length > 0) {
+        const newBookedParkingSeats = (updatedShow.bookedParkingSeats || []).filter(seat => !parkingSeatNumbers.includes(seat));
+        updatedShow = await Show.updateBookedParkingSeats(req.params.id, newBookedParkingSeats);
+      }
 
       const io = req.app.get('io');
       if (io) io.emit('show_updated', updatedShow);

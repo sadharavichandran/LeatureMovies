@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactPlayer from 'react-player';
-import { Play, Pause, FastForward, Rewind, Maximize, MessageCircle, Star, Heart, Flame, Laugh, Frown, Users, Activity, Loader2, PlaySquare } from 'lucide-react';
+import YouTubePlayer from 'react-player/youtube';
+import FilePlayer from 'react-player/file';
+import { Play, Pause, Film, Star, Users, Activity, Loader2, PlaySquare, Search } from 'lucide-react';
 import { socketService } from '../../services/socket';
-import { watchRoomService } from '../../services/api';
+import { watchRoomService, movieService } from '../../services/api';
 import { WatchRoom as WatchRoomType, UserProfile, WatchRoomParticipant, WatchRoomPoll } from '../../types';
 
-const Player: any = ReactPlayer;
+const YPlayer: any = (YouTubePlayer as any).default || YouTubePlayer;
+const FPlayer: any = (FilePlayer as any).default || FilePlayer;
 
 interface ActivityItem {
   id: string;
@@ -31,8 +34,7 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [reactions, setReactions] = useState<ReactionItem[]>([]);
 
-  const [videoUrlInput, setVideoUrlInput] = useState('');
-  const [videoNameInput, setVideoNameInput] = useState('');
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [playedSeconds, setPlayedSeconds] = useState(0);
   const playerRef = useRef<any>(null);
@@ -45,6 +47,12 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
 
   const [loading, setLoading] = useState(true);
 
+  // Search
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allCatalogMovies, setAllCatalogMovies] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   const isHost = roomState?.hostId === currentUser.id;
 
   useEffect(() => {
@@ -55,8 +63,6 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
         setRoomState(data.room);
         setIsPlaying(data.room.isPlaying);
         setPlayedSeconds(data.room.currentTimestamp);
-        setVideoUrlInput(data.room.currentVideoUrl || '');
-        setVideoNameInput(data.room.currentVideoName || '');
         setLoading(false);
       } catch (err) {
         console.error('Failed to load room:', err);
@@ -80,8 +86,6 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
       socketService.socket.on('video_sync_action', ({ action, payload }) => {
         if (action === 'change_trailer') {
           setRoomState(prev => prev ? { ...prev, currentVideoUrl: payload.url, currentVideoName: payload.name || prev.currentVideoName } : null);
-          setVideoUrlInput(payload.url);
-          if (payload.name) setVideoNameInput(payload.name);
           setIsPlaying(true);
           playerRef.current?.seekTo(0);
         } else if (action === 'play') {
@@ -123,6 +127,20 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
     };
   }, [roomId, currentUser]);
 
+  // Fetch catalog movies for host search modal
+  useEffect(() => {
+    if (showSearchModal && isHost && allCatalogMovies.length === 0) {
+      setIsSearching(true);
+      movieService.getAll().then(res => {
+        setAllCatalogMovies(res.movies || res);
+      }).catch(err => {
+        console.error('Failed to load movies for search', err);
+      }).finally(() => {
+        setIsSearching(false);
+      });
+    }
+  }, [showSearchModal, isHost, allCatalogMovies.length]);
+
   // Activity Feed Auto-scroll
   const activityFeedRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -131,26 +149,7 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
     }
   }, [activities]);
 
-  // Host Video Controls
-  const handleUrlSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isHost || !videoUrlInput) return;
 
-    let finalUrl = videoUrlInput.trim();
-    // Normalize youtu.be links to standard youtube.com links so react-player always recognizes them
-    if (finalUrl.includes('youtu.be/')) {
-      const videoId = finalUrl.split('youtu.be/')[1].split('?')[0];
-      finalUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    }
-
-    socketService.socket?.emit('sync_video', {
-      roomId,
-      action: 'change_trailer',
-      payload: { url: finalUrl, name: videoNameInput.trim() }
-    });
-    setRoomState(prev => prev ? { ...prev, currentVideoUrl: finalUrl, currentVideoName: videoNameInput.trim() } : null);
-    setIsPlaying(true);
-  };
 
   const handlePlayPause = (willPlay: boolean) => {
     if (!isHost) return;
@@ -182,6 +181,61 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
     setTimeout(() => {
       setReactions(prev => prev.filter(r => r.id !== id));
     }, 3000);
+  };
+
+  const filteredCatalogMovies = allCatalogMovies.filter((m: any) => 
+    m.trailerUrl && 
+    m.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSearchTrailers = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Auto-filtering is done via filteredCatalogMovies now
+  };
+
+  /**
+   * Converts any YouTube-style URL (watch, embed, youtu.be, Google Search redirect)
+   * into a clean https://www.youtube.com/watch?v=VIDEO_ID URL that react-player handles.
+   */
+  const normalizeVideoUrl = (rawUrl: string): string => {
+    const url = rawUrl.trim();
+    // Google Search redirect with embedded vid: param in the fragment
+    if (url.includes('google.com') && url.includes('vid:')) {
+      const match = url.match(/vid:([A-Za-z0-9_-]+)/);
+      if (match?.[1]) return `https://www.youtube.com/watch?v=${match[1]}`;
+    }
+    // youtu.be short links
+    if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1].split(/[?&#]/)[0];
+      if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
+    }
+    // youtube.com/embed/VIDEO_ID
+    if (url.includes('youtube.com/embed/')) {
+      const videoId = url.split('youtube.com/embed/')[1].split(/[?&#]/)[0];
+      if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
+    }
+    // youtube.com/watch?v=VIDEO_ID (already correct, just strip extra params)
+    if (url.includes('youtube.com/watch') && url.includes('v=')) {
+      const match = url.match(/[?&]v=([A-Za-z0-9_-]+)/);
+      if (match?.[1]) return `https://www.youtube.com/watch?v=${match[1]}`;
+    }
+    return url; // Return as-is for non-YouTube URLs (local video, Vimeo, etc.)
+  };
+
+  const handleSelectMovieTrailer = (movie: any) => {
+    if (!isHost) return;
+    const finalUrl = normalizeVideoUrl(movie.trailerUrl);
+    console.log('[WatchRoom] Playing trailer URL:', finalUrl);
+    
+    socketService.socket?.emit('sync_video', {
+      roomId,
+      action: 'change_trailer',
+      payload: { url: finalUrl, name: movie.title }
+    });
+    setRoomState(prev => prev ? { ...prev, currentVideoUrl: finalUrl, currentVideoName: movie.title } : null);
+    setIsPlaying(true);
+    setShowSearchModal(false);
+    setSearchQuery('');
   };
 
   // Polls
@@ -234,30 +288,17 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
 
       {/* LEFT COLUMN: PLAYER & CONTROLS */}
       <div className="flex-1 flex flex-col gap-6">
-        {/* URL Bar (Host Only) */}
+
+        {/* Host Controls */}
         {isHost && (
-          <form onSubmit={handleUrlSubmit} className="flex flex-col md:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Trailer Name (e.g. Dune Part 2)"
-              value={videoNameInput}
-              onChange={(e) => setVideoNameInput(e.target.value)}
-              className="w-full md:w-1/3 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-stone-200 focus:outline-none focus:border-[#C5A059]/50 transition-colors"
-            />
-            <input
-              type="text"
-              placeholder="Paste YouTube Trailer URL..."
-              value={videoUrlInput}
-              onChange={(e) => setVideoUrlInput(e.target.value)}
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-stone-200 focus:outline-none focus:border-[#C5A059]/50 transition-colors"
-            />
-            <button
-              type="submit"
-              className="bg-[#C5A059] hover:bg-[#F1D299] text-stone-950 px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-sm transition-colors flex items-center gap-2"
-            >
-              <PlaySquare className="w-4 h-4" /> Load
-            </button>
-          </form>
+          <div className="flex flex-col gap-4">
+             <button
+                onClick={() => setShowSearchModal(true)}
+                className="bg-[#C5A059] hover:bg-[#F1D299] text-stone-950 px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-sm transition-colors flex items-center justify-center gap-2 self-start"
+             >
+                <Search className="w-5 h-5" /> Search Movie Catalog
+             </button>
+          </div>
         )}
 
         {/* Video Player Container */}
@@ -266,25 +307,55 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
         </div>
         <div className="aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative shadow-2xl group">
           {roomState.currentVideoUrl ? (
-            <Player
-              ref={playerRef}
-              url={roomState.currentVideoUrl}
-              width="100%"
-              height="100%"
-              playing={isPlaying}
-              controls={isHost} // Only host gets native controls, but we override anyway for sync
-              config={{
-                youtube: { playerVars: { disablekb: 1, modestbranding: 1 } }
-              } as any}
-              onPlay={() => handlePlayPause(true)}
-              onPause={() => handlePlayPause(false)}
-              onSeek={(e: any) => isHost && handleSeek(e)}
-              onProgress={(s: any) => setPlayedSeconds(s.playedSeconds)}
-              style={{ pointerEvents: isHost ? 'auto' : 'none' }} // Prevent participants from clicking video to pause
-            />
+            (roomState.currentVideoUrl.includes('youtube.com') || roomState.currentVideoUrl.includes('youtu.be')) ? (
+              <YPlayer
+                ref={playerRef}
+                url={roomState.currentVideoUrl}
+                width="100%"
+                height="100%"
+                playing={isPlaying}
+                controls={true}
+                muted={false}
+                config={{
+                  youtube: {
+                    playerVars: {
+                      modestbranding: 1,
+                      rel: 0,
+                      autoplay: 1,
+                    }
+                  }
+                } as any}
+                onReady={() => {
+                  if (isHost) setIsPlaying(true);
+                }}
+                onPlay={() => handlePlayPause(true)}
+                onPause={() => handlePlayPause(false)}
+                onSeek={(e: any) => isHost && handleSeek(e)}
+                onProgress={(s: any) => setPlayedSeconds(s.playedSeconds)}
+                style={{ pointerEvents: isHost ? 'auto' : 'none' }}
+              />
+            ) : (
+              <FPlayer
+                ref={playerRef}
+                url={roomState.currentVideoUrl}
+                width="100%"
+                height="100%"
+                playing={isPlaying}
+                controls={true}
+                muted={false}
+                onReady={() => {
+                  if (isHost) setIsPlaying(true);
+                }}
+                onPlay={() => handlePlayPause(true)}
+                onPause={() => handlePlayPause(false)}
+                onSeek={(e: any) => isHost && handleSeek(e)}
+                onProgress={(s: any) => setPlayedSeconds(s.playedSeconds)}
+                style={{ pointerEvents: isHost ? 'auto' : 'none' }}
+              />
+            )
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-stone-600 bg-stone-950/50">
-              <FilmIcon className="w-16 h-16 mb-4 opacity-50" />
+              <Film className="w-16 h-16 mb-4 opacity-50" />
               <p className="font-serif text-xl">Waiting for host to load a trailer...</p>
             </div>
           )}
@@ -533,22 +604,63 @@ export default function WatchRoom({ roomId, currentUser, onLeave }: WatchRoomPro
         </div>
       )}
 
-    </div>
-  );
-}
+      {/* Search Trailers Modal */}
+      {showSearchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-3xl p-6 flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-serif text-stone-100">Search Movie Catalog</h3>
+              <button onClick={() => { setShowSearchModal(false); setSearchQuery(''); }} className="text-stone-500 hover:text-stone-300">Close</button>
+            </div>
+            
+            <form onSubmit={handleSearchTrailers} className="flex gap-3 mb-6">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search by movie name..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-stone-200 focus:border-[#C5A059]/50 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={isSearching}
+                className="bg-[#C5A059] text-stone-950 px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-sm flex items-center gap-2"
+              >
+                {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Search
+              </button>
+            </form>
 
-// Icon Helper
-function FilmIcon(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/0000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="18" height="18" x="3" y="3" rx="2" />
-      <path d="M7 3v18" />
-      <path d="M3 7.5h4" />
-      <path d="M3 12h18" />
-      <path d="M3 16.5h4" />
-      <path d="M17 3v18" />
-      <path d="M17 7.5h4" />
-      <path d="M17 16.5h4" />
-    </svg>
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 min-h-[300px]">
+              {isSearching ? (
+                <div className="flex flex-col items-center justify-center h-full text-[#C5A059]">
+                  <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                  <p className="text-sm">Loading catalog...</p>
+                </div>
+              ) : filteredCatalogMovies.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredCatalogMovies.map((movie: any) => (
+                    <div key={movie.id || movie._id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-2">
+                      <h4 className="font-bold text-stone-200">{movie.title}</h4>
+                      <p className="text-xs text-stone-400">Genre: {movie.genre}</p>
+                      <button 
+                        onClick={() => handleSelectMovieTrailer(movie)}
+                        className="mt-2 bg-[#C5A059] hover:bg-[#F1D299] text-stone-950 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors font-bold flex items-center justify-center gap-2"
+                      >
+                        <PlaySquare className="w-4 h-4" /> Play for Room
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-stone-500 italic">
+                  {searchQuery ? 'No movies found for your search.' : 'Type to search for a movie from catalog...'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
   );
 }

@@ -28,6 +28,8 @@ const BookingSchema = new Schema(
     foodOrderItems: { type: Array, default: [] },
     foodDeliveryOption: String,
     foodDeliveryFee: { type: Number, default: 0 },
+    parkingSeatNumbers: { type: Array, default: [] },
+    parkingTotalCost: { type: Number, default: 0 },
     isCancelled: { type: Boolean, default: false },
     bookingDate: { type: Date, default: Date.now },
     coinsEarned: { type: Number, default: 0 },

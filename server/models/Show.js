@@ -22,6 +22,11 @@ const ShowSchema = new Schema(
     premiumSeats: [String],
     regularSeats: [String],
     bookedSeats: [String],
+    bookedParkingSeats: [String],
+    maxRows: { type: Number, default: 10 },
+    maxCols: { type: Number, default: 15 },
+    vipRows: { type: Number, default: 2 },
+    premiumRows: { type: Number, default: 2 },
     isCancelled: { type: Boolean, default: false },
   },
   { timestamps: true }
@@ -66,8 +71,16 @@ class Show {
     return docs.map((d) => this._formatDoc(d));
   }
 
-  static async updateBookedSeats(id, bookedSeats) {
+  static async updateBookedSeats(id, bookedSeats, bookedParkingSeats = []) {
+    // If we want to strictly keep existing signatures or expand them, 
+    // it's safer to just provide an update generic method, or add bookedParkingSeats to the signature.
+    // However, the signature here is specifically updateBookedSeats. Let's just create a new method for parking.
     const doc = await ShowModel.findByIdAndUpdate(id, { bookedSeats }, { new: true }).lean();
+    return this._formatDoc(doc);
+  }
+
+  static async updateBookedParkingSeats(id, bookedParkingSeats) {
+    const doc = await ShowModel.findByIdAndUpdate(id, { bookedParkingSeats }, { new: true }).lean();
     return this._formatDoc(doc);
   }
 

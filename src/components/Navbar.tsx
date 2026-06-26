@@ -29,16 +29,9 @@ export default function Navbar({
               onNavigate("home");
               setMobileOpen(false);
             }}
-            className="flex items-center gap-3 cursor-pointer select-none"
+            className="flex items-center gap-3 cursor-pointer select-none group"
           >
-            <div className="p-2 bg-amber-500/5 rounded-lg border border-[#C5A059]/30 text-[#C5A059] shadow-[0_0_15px_rgba(197,160,89,0.1)] hover:scale-105 transition-transform">
-              <Film className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="font-serif font-bold text-2xl tracking-[0.15em] gold-text">
-                LEATURE
-              </span>
-            </div>
+            <img src="/logo.png" alt="Leature Logo" className="h-8 md:h-10 object-contain group-hover:brightness-110 transition-all" />
           </div>
 
           {/* Desktop links */}

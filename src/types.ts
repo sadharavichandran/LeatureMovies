@@ -30,6 +30,18 @@ export interface Theatre {
   name: string;
   location: string;
   screens: number; // total screens available
+  hasParking?: boolean;
+  parkingTwoWheelerRows?: number;
+  parkingTwoWheelerCols?: number;
+  parkingFourWheelerRows?: number;
+  parkingFourWheelerCols?: number;
+  parkingTwoWheelerCost?: number;
+  parkingFourWheelerCost?: number;
+  maxRows?: number;
+  maxCols?: number;
+  selectedLayoutSeats?: string[];
+  vipRows?: number;
+  premiumRows?: number;
   createdAt: string;
 }
 
@@ -42,17 +54,22 @@ export interface Show {
   theatreName: string;
   location: string;
   screenNumber: number;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM
+  date: string;
+  time: string;
   ticketPrice: number;
-  isCancelled: boolean;
   totalSeats: number;
-  seatNumbers: string[]; // List of all configured seats (e.g. A1, A2, etc.)
-  vipSeats: string[]; // List of seat IDs categorized as VIP
-  premiumSeats: string[]; // List of seat IDs categorized as Premium
-  regularSeats: string[]; // List of seat IDs categorized as Regular
-  bookedSeats: string[]; // Track booked seats in real time
+  seatNumbers: string[];
+  vipSeats: string[];
+  premiumSeats: string[];
+  regularSeats: string[];
+  bookedSeats: string[];
+  bookedParkingSeats?: string[];
+  maxRows?: number;
+  maxCols?: number;
+  vipRows?: number;
+  premiumRows?: number;
   createdAt: string;
+  isCancelled: boolean;
 }
 
 export interface Booking {
@@ -67,8 +84,8 @@ export interface Booking {
   theatreId: string;
   theatreName: string;
   screenNumber: number;
-  showDate: string; // YYYY-MM-DD
-  showTime: string; // HH:MM
+  showDate: string;
+  showTime: string;
   seatNumbers: string[];
   ticketCount: number;
   ticketPrice: number;
@@ -76,6 +93,8 @@ export interface Booking {
   foodOrderItems?: FoodOrderItem[];
   foodDeliveryOption?: "seat" | "counter";
   foodDeliveryFee?: number;
+  parkingSeatNumbers?: string[];
+  parkingTotalCost?: number;
   paymentStatus: "Pending" | "Success" | "Failed";
   paymentMethod: "UPI" | "Net Banking" | "Debit Card" | "Credit Card" | "Cash" | "Counter Card" | "Counter UPI";
   qrCodeUrl: string; // generated QR code representation

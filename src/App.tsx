@@ -355,10 +355,48 @@ export default function App() {
   const handleUpdateTheatre = async (theatreData: Theatre) => {
     try {
       await theatreService.update(theatreData.id, theatreData);
-      showToast(`Theatre complex details modified.`, "success");
-      // Refresh theatres
+      
+      // Cascade the theatre's updated layout to all existing shows for this theatre
+      // This ensures that when admin edits the master theatre layout, users see the updated grid on existing unbooked slots
+      const theatreShows = shows.filter(s => s.theatreId === theatreData.id);
+      for (const show of theatreShows) {
+        const rowLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const vipSeats: string[] = [];
+        const premiumSeats: string[] = [];
+        const regularSeats: string[] = [];
+        const seatNumbers = theatreData.selectedLayoutSeats || [];
+        
+        seatNumbers.forEach(num => {
+          const r = rowLetters.indexOf(num.charAt(0));
+          if (r < (theatreData.vipRows || 0)) {
+            vipSeats.push(num);
+          } else if (r < (theatreData.vipRows || 0) + (theatreData.premiumRows || 0)) {
+            premiumSeats.push(num);
+          } else {
+            regularSeats.push(num);
+          }
+        });
+        
+        await showService.update(show.id, {
+          ...show,
+          seatNumbers,
+          vipSeats,
+          premiumSeats,
+          regularSeats,
+          totalSeats: seatNumbers.length,
+          maxRows: theatreData.maxRows,
+          maxCols: theatreData.maxCols,
+          vipRows: theatreData.vipRows,
+          premiumRows: theatreData.premiumRows,
+        });
+      }
+
+      showToast(`Theatre complex details modified and shows synced.`, "success");
+      // Refresh theatres and shows
       const response = await theatreService.getAll();
       setTheatres(response.theatres || []);
+      const showsResponse = await showService.getAll();
+      setShows(showsResponse.shows || []);
     } catch (err: any) {
       showToast(err.message || "Failed to update theatre", "error");
     }

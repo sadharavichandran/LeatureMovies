@@ -157,12 +157,24 @@ export default function AdminPanel({
   });
   const [isEditingMovie, setIsEditingMovie] = useState(false);
 
-  const [theatreForm, setTheatreForm] = useState({
+  const [theatreForm, setTheatreForm] = useState<any>({
     id: "",
     name: "",
     location: "Downtown Premium",
     screens: 3,
     createdAt: new Date().toISOString(),
+    hasParking: false,
+    parkingTwoWheelerRows: 3,
+    parkingTwoWheelerCols: 5,
+    parkingFourWheelerRows: 2,
+    parkingFourWheelerCols: 4,
+    parkingTwoWheelerCost: 20,
+    parkingFourWheelerCost: 50,
+    maxRows: 10,
+    maxCols: 15,
+    vipRows: 2,
+    premiumRows: 2,
+    selectedLayoutSeats: [] as string[],
   });
   const [isEditingTheatre, setIsEditingTheatre] = useState(false);
 
@@ -716,6 +728,18 @@ export default function AdminPanel({
                       location: "Downtown Boulevard, Sector 4",
                       screens: 3,
                       createdAt: new Date().toISOString(),
+                      hasParking: false,
+                      parkingTwoWheelerRows: 3,
+                      parkingTwoWheelerCols: 5,
+                      parkingFourWheelerRows: 2,
+                      parkingFourWheelerCols: 4,
+                      parkingTwoWheelerCost: 20,
+                      parkingFourWheelerCost: 50,
+                      maxRows: 10,
+                      maxCols: 15,
+                      vipRows: 2,
+                      premiumRows: 2,
+                      selectedLayoutSeats: [],
                     });
                     setIsEditingTheatre(true);
                   }}
@@ -743,7 +767,7 @@ export default function AdminPanel({
                   }
                   setIsEditingTheatre(false);
                 }}
-                className="p-6 bg-stone-900/50 border border-stone-800 rounded-2xl flex flex-col gap-4 max-w-2xl"
+                className="p-6 bg-stone-900/50 border border-stone-800 rounded-2xl flex flex-col gap-4 max-w-3xl"
               >
                 <h3 className="text-lg font-bold text-stone-200">
                   {theatreForm.id ? "Update Location Info" : "Register Location Entity"}
@@ -787,6 +811,231 @@ export default function AdminPanel({
                   </div>
                 </div>
 
+                {/* Parking Configuration */}
+                <div className="flex flex-col gap-4 pt-2 border-t border-stone-800/50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-stone-200">Parking Facility</h4>
+                      <p className="text-xs text-stone-500 mt-0.5">Enable to configure parking layout and pricing</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTheatreForm({ ...theatreForm, hasParking: !(theatreForm as any).hasParking })}
+                      className={`relative w-12 h-6 rounded-full transition-colors duration-200 cursor-pointer ${
+                        (theatreForm as any).hasParking ? "bg-amber-500" : "bg-stone-700"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                          (theatreForm as any).hasParking ? "translate-x-6" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {(theatreForm as any).hasParking && (
+                    <div className="flex flex-col gap-4 p-4 bg-stone-950/60 border border-amber-500/10 rounded-xl animate-fadeIn">
+                      {/* 2-Wheeler Zone */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest">2-Wheeler Zone</span>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-stone-400">Rows</label>
+                            <input
+                              type="number" min={1} max={20}
+                              value={(theatreForm as any).parkingTwoWheelerRows}
+                              onChange={(e) => setTheatreForm({ ...theatreForm, parkingTwoWheelerRows: parseInt(e.target.value) || 1 } as any)}
+                              className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-stone-400">Columns</label>
+                            <input
+                              type="number" min={1} max={30}
+                              value={(theatreForm as any).parkingTwoWheelerCols}
+                              onChange={(e) => setTheatreForm({ ...theatreForm, parkingTwoWheelerCols: parseInt(e.target.value) || 1 } as any)}
+                              className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-stone-400">Cost (₹ / slot)</label>
+                            <input
+                              type="number" min={0}
+                              value={(theatreForm as any).parkingTwoWheelerCost}
+                              onChange={(e) => setTheatreForm({ ...theatreForm, parkingTwoWheelerCost: parseInt(e.target.value) || 0 } as any)}
+                              className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-stone-500">
+                          Layout: {(theatreForm as any).parkingTwoWheelerRows} rows × {(theatreForm as any).parkingTwoWheelerCols} cols = {((theatreForm as any).parkingTwoWheelerRows || 0) * ((theatreForm as any).parkingTwoWheelerCols || 0)} total slots
+                        </p>
+                      </div>
+
+                      {/* 4-Wheeler Zone */}
+                      <div className="flex flex-col gap-2 pt-2 border-t border-stone-800/40">
+                        <span className="text-xs font-semibold text-stone-300 uppercase tracking-widest">4-Wheeler Zone</span>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-stone-400">Rows</label>
+                            <input
+                              type="number" min={1} max={20}
+                              value={(theatreForm as any).parkingFourWheelerRows}
+                              onChange={(e) => setTheatreForm({ ...theatreForm, parkingFourWheelerRows: parseInt(e.target.value) || 1 } as any)}
+                              className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-stone-400">Columns</label>
+                            <input
+                              type="number" min={1} max={30}
+                              value={(theatreForm as any).parkingFourWheelerCols}
+                              onChange={(e) => setTheatreForm({ ...theatreForm, parkingFourWheelerCols: parseInt(e.target.value) || 1 } as any)}
+                              className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-stone-400">Cost (₹ / slot)</label>
+                            <input
+                              type="number" min={0}
+                              value={(theatreForm as any).parkingFourWheelerCost}
+                              onChange={(e) => setTheatreForm({ ...theatreForm, parkingFourWheelerCost: parseInt(e.target.value) || 0 } as any)}
+                              className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-stone-500">
+                          Layout: {(theatreForm as any).parkingFourWheelerRows} rows × {(theatreForm as any).parkingFourWheelerCols} cols = {((theatreForm as any).parkingFourWheelerRows || 0) * ((theatreForm as any).parkingFourWheelerCols || 0)} total slots
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ─── Interactive Seat Layout Builder ─── */}
+                <div className="flex flex-col gap-4 pt-2 border-t border-stone-800/50">
+                  <div className="flex flex-col gap-1">
+                    <h4 className="text-xs font-bold text-amber-400 uppercase" style={{letterSpacing:'0.14em'}}>
+                      Configure Theatre Default Seating Inventory
+                    </h4>
+                    <p className="text-xs text-stone-500">Set rows, columns and VIP/Premium tiers. Then click each seat to activate it.</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-stone-400">Total Rows (Max 26)</label>
+                      <input type="number" min={1} max={26}
+                        value={theatreForm.maxRows}
+                        onChange={(e) => {
+                          const rows = Math.min(26, Math.max(1, parseInt(e.target.value) || 1));
+                          const valid = (theatreForm.selectedLayoutSeats || []).filter((s: string) => s.charCodeAt(0) - 65 < rows);
+                          setTheatreForm({ ...theatreForm, maxRows: rows, selectedLayoutSeats: valid });
+                        }}
+                        className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-stone-400">Columns per Row (Max 30)</label>
+                      <input type="number" min={1} max={30}
+                        value={theatreForm.maxCols}
+                        onChange={(e) => {
+                          const cols = Math.min(30, Math.max(1, parseInt(e.target.value) || 1));
+                          const valid = (theatreForm.selectedLayoutSeats || []).filter((s: string) => parseInt(s.slice(1)) - 1 < cols);
+                          setTheatreForm({ ...theatreForm, maxCols: cols, selectedLayoutSeats: valid });
+                        }}
+                        className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-stone-400">VIP Tier Rows</label>
+                      <input type="number" min={0} max={theatreForm.maxRows}
+                        value={theatreForm.vipRows}
+                        onChange={(e) => setTheatreForm({ ...theatreForm, vipRows: parseInt(e.target.value) || 0 })}
+                        className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs text-stone-400">Premium Tier Rows</label>
+                      <input type="number" min={0} max={theatreForm.maxRows}
+                        value={theatreForm.premiumRows}
+                        onChange={(e) => setTheatreForm({ ...theatreForm, premiumRows: parseInt(e.target.value) || 0 })}
+                        className="px-3 py-2 bg-stone-900 border border-stone-700 rounded-xl text-stone-100 text-sm outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 p-4 bg-stone-950 border border-stone-800 rounded-2xl overflow-x-auto">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">Interactive Layout Builder</span>
+                      <div className="flex gap-2">
+                        <button type="button"
+                          onClick={() => {
+                            const all: string[] = [];
+                            for (let r = 0; r < theatreForm.maxRows; r++)
+                              for (let c = 1; c <= theatreForm.maxCols; c++)
+                                all.push(`${String.fromCharCode(65 + r)}${c}`);
+                            setTheatreForm({ ...theatreForm, selectedLayoutSeats: all });
+                          }}
+                          className="px-3 py-1 text-[10px] font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/30 cursor-pointer"
+                        >Select All</button>
+                        <button type="button"
+                          onClick={() => setTheatreForm({ ...theatreForm, selectedLayoutSeats: [] })}
+                          className="px-3 py-1 text-[10px] font-bold uppercase bg-stone-800 text-stone-400 border border-stone-700 rounded-lg hover:bg-stone-700 cursor-pointer"
+                        >Clear All</button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-stone-600 mb-2">Click seats to toggle on/off. Leave inactive to create aisles or gaps.</p>
+
+                    <div className="flex flex-col gap-1 min-w-max">
+                      {Array.from({ length: theatreForm.maxRows }).map((_, rIdx) => {
+                        const rowLetter = String.fromCharCode(65 + rIdx);
+                        const isVipRow = rIdx < theatreForm.vipRows;
+                        const isPremRow = !isVipRow && rIdx < (theatreForm.vipRows + theatreForm.premiumRows);
+                        return (
+                          <div key={rowLetter} className="flex items-center gap-1">
+                            <span className={`w-5 text-[10px] font-bold font-mono select-none text-right mr-1 ${isVipRow ? 'text-amber-400' : isPremRow ? 'text-cyan-400' : 'text-stone-500'}`}>{rowLetter}</span>
+                            <div className="flex gap-1">
+                              {Array.from({ length: theatreForm.maxCols }).map((_, cIdx) => {
+                                const seatId = `${rowLetter}${cIdx + 1}`;
+                                const isActive = (theatreForm.selectedLayoutSeats || []).includes(seatId);
+                                return (
+                                  <button key={seatId} type="button"
+                                    onClick={() => {
+                                      const seats: string[] = theatreForm.selectedLayoutSeats || [];
+                                      setTheatreForm({ ...theatreForm, selectedLayoutSeats: isActive ? seats.filter((s: string) => s !== seatId) : [...seats, seatId] });
+                                    }}
+                                    title={seatId}
+                                    className={`w-6 h-6 rounded-t-md rounded-b-sm border text-[8px] font-bold font-mono flex items-center justify-center transition-all cursor-pointer select-none ${
+                                      isActive
+                                        ? isVipRow ? 'bg-amber-500 border-amber-400 text-black' : isPremRow ? 'bg-cyan-500 border-cyan-400 text-black' : 'bg-stone-300 border-stone-200 text-stone-900'
+                                        : 'bg-stone-900 border-stone-700 text-stone-600 hover:bg-stone-800 hover:border-stone-500'
+                                    }`}
+                                  >{cIdx + 1}</button>
+                                );
+                              })}
+                            </div>
+                            <span className={`w-5 text-[10px] font-bold font-mono select-none ml-1 ${isVipRow ? 'text-amber-400' : isPremRow ? 'text-cyan-400' : 'text-stone-500'}`}>{rowLetter}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-stone-800 text-[10px] font-mono text-stone-500">
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500 border border-amber-400 block"/> VIP (active)</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-cyan-500 border border-cyan-400 block"/> Premium (active)</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-stone-300 border border-stone-200 block"/> Regular (active)</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-stone-900 border border-stone-700 block"/> Inactive/Aisle</span>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] font-mono text-stone-500 bg-stone-950/50 p-3 rounded-xl border border-stone-800">
+                    <span className="text-amber-400 font-bold uppercase tracking-widest block mb-1">Generated Map Schema:</span>
+                    VIP Rows: {theatreForm.vipRows} rows [+50% surcharge]<br/>
+                    Premium Rows: {theatreForm.premiumRows} rows [+25% surcharge]<br/>
+                    Total Active Physical Seats: {(theatreForm.selectedLayoutSeats || []).length}
+                  </div>
+                </div>
+
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
@@ -818,9 +1067,16 @@ export default function AdminPanel({
                     </div>
                     <h3 className="font-bold text-stone-200 text-lg leading-tight">{t.name}</h3>
                     <p className="text-xs text-stone-400">{t.location}</p>
-                    <span className="mt-2 text-xs font-semibold px-2.5 py-1 bg-stone-900 rounded-md border border-stone-800 w-fit text-stone-300">
-                      ScreensCount: {t.screens}
-                    </span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="text-xs font-semibold px-2.5 py-1 bg-stone-900 rounded-md border border-stone-800 w-fit text-stone-300">
+                        Screens: {t.screens}
+                      </span>
+                      {t.hasParking && (
+                        <span className="text-xs font-semibold px-2.5 py-1 bg-amber-500/10 rounded-md border border-amber-500/20 w-fit text-amber-400">
+                          🅿 Parking
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-6 pt-3 border-t border-stone-800/35 flex justify-between items-center">
@@ -930,33 +1186,55 @@ export default function AdminPanel({
                     return;
                   }
 
-                  // Calculate Seat Layout
-                  const total = showForm.totalSeatsCount;
-                  const seatsPerRow = 10;
-                  const totalRows = Math.ceil(total / seatsPerRow);
-                  const rowLetters = "ABCDEFGHJKLMNOPQRSTUVWXYZ"; // Skip I to avoid confusion
+                  // Calculate Seat Layout — prefer theatre's saved layout if available
+                  const theatreLayout = (targetTheatre as any).selectedLayoutSeats;
+                  const useTheatreLayout = theatreLayout && theatreLayout.length > 0;
+
+                  const theatreVipRows = (targetTheatre as any).vipRows ?? showForm.vipRows;
+                  const theatrePremiumRows = (targetTheatre as any).premiumRows ?? showForm.premiumRows;
 
                   const seatNumbers: string[] = [];
                   const vipSeats: string[] = [];
                   const premiumSeats: string[] = [];
                   const regularSeats: string[] = [];
 
-                  for (let r = 0; r < totalRows; r++) {
-                    const letter = rowLetters[r] || "Z";
-                    for (let s = 1; s <= seatsPerRow; s++) {
-                      const num = `${letter}${s}`;
-                      seatNumbers.push(num);
-
-                      // Categorize rows
-                      if (r < showForm.vipRows) {
-                        vipSeats.push(num);
-                      } else if (r < showForm.vipRows + showForm.premiumRows) {
-                        premiumSeats.push(num);
+                  if (useTheatreLayout) {
+                    // Use the exact seats the admin selected in the theatre layout builder
+                    theatreLayout.forEach((seatId: string) => {
+                      seatNumbers.push(seatId);
+                      const rowIndex = seatId.charCodeAt(0) - 65;
+                      if (rowIndex < theatreVipRows) {
+                        vipSeats.push(seatId);
+                      } else if (rowIndex < theatreVipRows + theatrePremiumRows) {
+                        premiumSeats.push(seatId);
                       } else {
-                        regularSeats.push(num);
+                        regularSeats.push(seatId);
+                      }
+                    });
+                  } else {
+                    // Fallback: generate seats from showForm config
+                    const total = showForm.totalSeatsCount;
+                    const seatsPerRow = 10;
+                    const totalRows = Math.ceil(total / seatsPerRow);
+                    const rowLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                    for (let r = 0; r < totalRows; r++) {
+                      const letter = rowLetters[r] || "Z";
+                      for (let s = 1; s <= seatsPerRow; s++) {
+                        const num = `${letter}${s}`;
+                        seatNumbers.push(num);
+                        if (r < showForm.vipRows) {
+                          vipSeats.push(num);
+                        } else if (r < showForm.vipRows + showForm.premiumRows) {
+                          premiumSeats.push(num);
+                        } else {
+                          regularSeats.push(num);
+                        }
                       }
                     }
                   }
+
+                  const targetMaxRows = useTheatreLayout ? (targetTheatre as any).maxRows : Math.ceil(showForm.totalSeatsCount / 10);
+                  const targetMaxCols = useTheatreLayout ? (targetTheatre as any).maxCols : 10;
 
                   if (showForm.id) {
                     // Update - only one date/time allowed
@@ -982,6 +1260,8 @@ export default function AdminPanel({
                             vipSeats,
                             premiumSeats,
                             regularSeats,
+                            maxRows: targetMaxRows,
+                            maxCols: targetMaxCols,
                           }
                           : {}),
                       });
@@ -1008,6 +1288,8 @@ export default function AdminPanel({
                           vipSeats,
                           premiumSeats,
                           regularSeats,
+                          maxRows: targetMaxRows,
+                          maxCols: targetMaxCols,
                           createdAt: new Date().toISOString(),
                         });
                       }

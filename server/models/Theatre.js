@@ -9,6 +9,18 @@ const TheatreSchema = new Schema(
     name: { type: String, required: true },
     location: String,
     screens: Number,
+    hasParking: { type: Boolean, default: false },
+    parkingTwoWheelerRows: { type: Number, default: 0 },
+    parkingTwoWheelerCols: { type: Number, default: 0 },
+    parkingFourWheelerRows: { type: Number, default: 0 },
+    parkingFourWheelerCols: { type: Number, default: 0 },
+    parkingTwoWheelerCost: { type: Number, default: 0 },
+    parkingFourWheelerCost: { type: Number, default: 0 },
+    maxRows: { type: Number, default: 10 },
+    maxCols: { type: Number, default: 15 },
+    selectedLayoutSeats: { type: [String], default: [] },
+    vipRows: { type: Number, default: 2 },
+    premiumRows: { type: Number, default: 2 },
   },
   { timestamps: true }
 );

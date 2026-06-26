@@ -13,14 +13,9 @@ export default function Footer({ onNavigateHome }: FooterProps) {
           <div className="flex flex-col gap-4">
             <div
               onClick={onNavigateHome}
-              className="flex items-center gap-3 cursor-pointer select-none"
+              className="flex items-center gap-3 cursor-pointer select-none group"
             >
-              <div className="p-2 bg-amber-500/5 rounded-lg border border-[#C5A059]/30 text-[#C5A059]">
-                <Film className="w-5 h-5" />
-              </div>
-              <span className="font-serif font-bold text-2xl tracking-[0.15em] gold-text">
-                LEATURE
-              </span>
+              <img src="/logo.png" alt="Leature Logo" className="h-8 md:h-10 object-contain group-hover:brightness-110 transition-all" />
             </div>
             <p className="text-xs leading-relaxed text-stone-400 mt-2">
               Experience movie ticket booking redesigned. Dynamic schedules, premium halls, physical-matching visual interactive seat selectors, and state-of-the-art cinematic luxury.

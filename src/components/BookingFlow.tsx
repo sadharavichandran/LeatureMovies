@@ -46,7 +46,7 @@ export default function BookingFlow({
   onClose,
   onOpenAuth,
 }: BookingFlowProps) {
-  const [step, setStep] = useState<"details" | "date" | "seats" | "food" | "payment" | "success">("details");
+  const [step, setStep] = useState<"details" | "date" | "seats" | "food" | "parking" | "payment" | "success">("details");
 
   // Filter shows matching this movie
   const movieShows = useMemo(() => {
@@ -90,6 +90,9 @@ export default function BookingFlow({
   const [foodsLoading, setFoodsLoading] = useState(false);
   const [foodOrder, setFoodOrder] = useState<Record<string, number>>({}); // foodId -> quantity
   const [foodDeliveryOption, setFoodDeliveryOption] = useState<"seat" | "counter">("counter");
+
+  // Parking state
+  const [selectedParkingSeats, setSelectedParkingSeats] = useState<string[]>([]);
 
   // Fetch foods when theatre is selected
   useEffect(() => {
@@ -175,6 +178,52 @@ export default function BookingFlow({
     return selectedSeats.reduce((sum, seat) => sum + calculateSeatPrice(seat, activeShowObj.ticketPrice), 0);
   }, [selectedSeats, activeShowObj]);
 
+  const activeTheatre = useMemo(() => {
+    return theatres.find((t) => t.id === activeShowObj?.theatreId);
+  }, [theatres, activeShowObj]);
+
+  const parkingTotalCost = useMemo(() => {
+    if (!activeTheatre) return 0;
+    let cost = 0;
+    selectedParkingSeats.forEach(seat => {
+      if (seat.startsWith("2W-")) cost += (activeTheatre.parkingTwoWheelerCost || 0);
+      else if (seat.startsWith("4W-")) cost += (activeTheatre.parkingFourWheelerCost || 0);
+    });
+    return cost;
+  }, [activeTheatre, selectedParkingSeats]);
+
+  const generateParkingGrid = (prefix: string, rows: number, cols: number) => {
+    const grid: string[][] = [];
+    for (let r = 0; r < rows; r++) {
+      const rowId = String.fromCharCode(65 + r);
+      const rowSeats: string[] = [];
+      for (let c = 1; c <= cols; c++) {
+        rowSeats.push(`${prefix}${rowId}${c}`);
+      }
+      grid.push(rowSeats);
+    }
+    return grid;
+  };
+
+  const twoWheelerGrid = useMemo(() => {
+    if (!activeTheatre) return [];
+    return generateParkingGrid("2W-", activeTheatre.parkingTwoWheelerRows || 0, activeTheatre.parkingTwoWheelerCols || 0);
+  }, [activeTheatre]);
+
+  const fourWheelerGrid = useMemo(() => {
+    if (!activeTheatre) return [];
+    return generateParkingGrid("4W-", activeTheatre.parkingFourWheelerRows || 0, activeTheatre.parkingFourWheelerCols || 0);
+  }, [activeTheatre]);
+
+  const handleToggleParkingSeat = (seatId: string) => {
+    if (activeShowObj?.bookedParkingSeats?.includes(seatId)) return;
+    if (selectedParkingSeats.includes(seatId)) {
+      setSelectedParkingSeats(prev => prev.filter(s => s !== seatId));
+    } else {
+      setSelectedParkingSeats(prev => [...prev, seatId]);
+    }
+  };
+
   const maxCoinsToUse = Math.min(currentUser?.rewardCoins || 0, subTotal * 5); // 5 coins = 1 rupuess
   const discountAmount = useCoins ? Math.floor(maxCoinsToUse / 5) : 0;
   const finalAmount = Math.max(0, subTotal - discountAmount);
@@ -207,13 +256,15 @@ export default function BookingFlow({
         seatNumbers: selectedSeats,
         ticketCount: selectedSeats.length,
         ticketPrice: activeShowObj.ticketPrice,
-        totalAmount: finalAmount + foodOrderTotal + foodDeliveryFee,
+        totalAmount: finalAmount + foodOrderTotal + foodDeliveryFee + parkingTotalCost,
         paymentStatus: "Success",
         paymentMethod,
         qrCodeUrl: "", // calculated dynamically on receipt
         foodOrderItems: foodOrderItems,
         foodDeliveryOption: foodDeliveryOption,
         foodDeliveryFee: foodDeliveryFee,
+        parkingSeatNumbers: selectedParkingSeats,
+        parkingTotalCost,
         isCancelled: false,
         coinsEarned,
         coinsUsed: useCoins ? maxCoinsToUse : 0,
@@ -545,146 +596,101 @@ export default function BookingFlow({
             </div>
 
             {/* Structured Grid map with Aisles */}
-            <div className="w-full flex justify-center py-8 bg-gradient-to-b from-stone-950/40 to-stone-950/10 rounded-[40px] p-8 border border-stone-850/50 shadow-inner">
-              <div className="flex flex-col gap-4 max-w-[600px] w-full items-center">
-                {Object.entries(
-                  activeShowObj.seatNumbers.reduce((acc, seat) => {
-                    const row = seat[0];
-                    if (!acc[row]) acc[row] = [];
-                    acc[row].push(seat);
-                    return acc;
-                  }, {} as Record<string, string[]>)
-                ).map(([rowLetter, seatsInRow]) => (
-                  <div key={rowLetter} className="flex items-center gap-3 sm:gap-6 w-full justify-center">
-                    {/* Row Label Left */}
-                    <div className="w-6 text-center text-[10px] font-bold text-stone-600 font-mono select-none">
-                      {rowLetter}
-                    </div>
+            <div className="w-full overflow-x-auto flex justify-center py-8 bg-gradient-to-b from-stone-950/40 to-stone-950/10 rounded-[40px] p-8 border border-stone-850/50 shadow-inner">
+              <div className="flex flex-col gap-4 min-w-max items-center">
+                {(() => {
+                  // Always derive grid dimensions directly from the actual seat IDs.
+                  // This guarantees the grid matches the admin's layout even if
+                  // maxRows / maxCols in the database are stale.
+                  const maxRows = activeShowObj.seatNumbers.reduce(
+                    (max: number, seat: string) => Math.max(max, seat.charCodeAt(0) - 64),
+                    0
+                  );
+                  const maxCols = activeShowObj.seatNumbers.reduce(
+                    (max: number, seat: string) => Math.max(max, parseInt(seat.slice(1)) || 0),
+                    0
+                  );
 
-                    {/* Left Block (first half) */}
-                    <div className="flex gap-1.5 sm:gap-2">
-                      {seatsInRow.slice(0, Math.ceil(seatsInRow.length / 2)).map((seat) => {
-                        const isBooked = activeShowObj.bookedSeats.includes(seat);
-                        const isSecured = selectedSeats.includes(seat);
-                        const isVIP = activeShowObj.vipSeats.includes(seat);
-                        const isPREM = activeShowObj.premiumSeats.includes(seat);
+                  return Array.from({ length: maxRows }).map((_, rIndex) => {
+                    const rowLetter = String.fromCharCode(65 + rIndex);
+                    return (
+                      <div key={rowLetter} className="flex items-center gap-1.5 sm:gap-2 w-full justify-center">
+                        {/* Row Label Left */}
+                        <div className="w-6 text-center text-[10px] font-bold text-stone-600 font-mono select-none mr-2">
+                          {rowLetter}
+                        </div>
 
-                        const borderStyle = isVIP
-                          ? "border-amber-500/50"
-                          : isPREM
-                            ? "border-cyan-500/30"
-                            : "border-stone-800";
+                        <div className="flex gap-1.5 sm:gap-2">
+                          {Array.from({ length: maxCols }).map((_, i) => {
+                            const seat = `${rowLetter}${i + 1}`;
+                            const exists = activeShowObj.seatNumbers.includes(seat);
 
-                        return (
-                          <button
-                            key={seat}
-                            disabled={false}
-                            onClick={() => {
-                              if (isBooked) {
-                                if (selectedWaitlistSeats.includes(seat)) {
-                                  setSelectedWaitlistSeats(selectedWaitlistSeats.filter((s) => s !== seat));
-                                } else {
-                                  setSelectedWaitlistSeats([...selectedWaitlistSeats, seat]);
-                                  setSelectedSeats([]);
-                                }
-                              } else {
-                                if (isSecured) {
-                                  setSelectedSeats(selectedSeats.filter((s) => s !== seat));
-                                } else {
-                                  setSelectedSeats([...selectedSeats, seat]);
-                                  setSelectedWaitlistSeats([]);
-                                }
-                              }
-                            }}
-                            className={`relative aspect-square w-6 sm:w-8 rounded-t-xl rounded-b-sm border-t-2 border-l border-r border-b text-[9px] sm:text-[10px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
-                                ? selectedWaitlistSeats.includes(seat)
-                                  ? "bg-amber-600/30 text-amber-400 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse"
-                                  : "bg-white/5 text-stone-700 hover:text-stone-400 border-stone-850 opacity-40 hover:opacity-75"
-                                : isSecured
-                                  ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-[#050505] border-[#C5A059] shadow-[0_0_15px_rgba(197,160,89,0.4)] transform -translate-y-1"
-                                  : isVIP
-                                    ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20 hover:-translate-y-0.5"
-                                    : isPREM
-                                      ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15 hover:-translate-y-0.5"
-                                      : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:-translate-y-0.5 hover:border-stone-600"
-                              }`}
-                            title={`${seat} - ${isBooked ? "Booked (Waitlistable)" : isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard Rate"}`}
-                          >
-                            <span className="z-10">{seat.replace(rowLetter, "")}</span>
-                            {/* Little seat cushion graphic */}
-                            <div className={`absolute bottom-0 w-full h-[3px] rounded-t-sm opacity-50 ${isSecured ? "bg-black/20" : selectedWaitlistSeats.includes(seat) ? "bg-amber-500/50" : "bg-white/10"}`}></div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                            if (!exists) {
+                              return <div key={`gap-${seat}`} className="w-6 sm:w-8 flex-shrink-0"></div>;
+                            }
 
-                    {/* Center Aisle Walkway */}
-                    <div className="w-4 sm:w-8 flex items-center justify-center">
-                      <div className="h-full w-[1px] bg-white/5 border-l border-dashed border-stone-800"></div>
-                    </div>
+                            const isBooked = activeShowObj.bookedSeats.includes(seat);
+                            const isSecured = selectedSeats.includes(seat);
+                            const isVIP = activeShowObj.vipSeats.includes(seat);
+                            const isPREM = activeShowObj.premiumSeats.includes(seat);
 
-                    {/* Right Block (second half) */}
-                    <div className="flex gap-1.5 sm:gap-2">
-                      {seatsInRow.slice(Math.ceil(seatsInRow.length / 2)).map((seat) => {
-                        const isBooked = activeShowObj.bookedSeats.includes(seat);
-                        const isSecured = selectedSeats.includes(seat);
-                        const isVIP = activeShowObj.vipSeats.includes(seat);
-                        const isPREM = activeShowObj.premiumSeats.includes(seat);
+                            const borderStyle = isVIP
+                              ? "border-amber-500/50"
+                              : isPREM
+                                ? "border-cyan-500/30"
+                                : "border-stone-800";
 
-                        const borderStyle = isVIP
-                          ? "border-amber-500/50"
-                          : isPREM
-                            ? "border-cyan-500/30"
-                            : "border-stone-800";
+                            return (
+                              <button
+                                key={seat}
+                                disabled={false}
+                                onClick={() => {
+                                  if (isBooked) {
+                                    if (selectedWaitlistSeats.includes(seat)) {
+                                      setSelectedWaitlistSeats(selectedWaitlistSeats.filter((s) => s !== seat));
+                                    } else {
+                                      setSelectedWaitlistSeats([...selectedWaitlistSeats, seat]);
+                                      setSelectedSeats([]);
+                                    }
+                                  } else {
+                                    if (isSecured) {
+                                      setSelectedSeats(selectedSeats.filter((s) => s !== seat));
+                                    } else {
+                                      setSelectedSeats([...selectedSeats, seat]);
+                                      setSelectedWaitlistSeats([]);
+                                    }
+                                  }
+                                }}
+                                className={`relative aspect-square w-6 sm:w-8 rounded-t-xl rounded-b-sm border-t-2 border-l border-r border-b text-[9px] sm:text-[10px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
+                                    ? selectedWaitlistSeats.includes(seat)
+                                      ? "bg-amber-600/30 text-amber-400 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse"
+                                      : "bg-white/5 text-stone-700 hover:text-stone-400 border-stone-850 opacity-40 hover:opacity-75"
+                                    : isSecured
+                                      ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-[#050505] border-[#C5A059] shadow-[0_0_15px_rgba(197,160,89,0.4)] transform -translate-y-1"
+                                      : isVIP
+                                        ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20 hover:-translate-y-0.5"
+                                        : isPREM
+                                          ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15 hover:-translate-y-0.5"
+                                          : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:-translate-y-0.5 hover:border-stone-600"
+                                  }`}
+                                title={`${seat} - ${isBooked ? "Booked (Waitlistable)" : isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard Rate"}`}
+                              >
+                                <span className="z-10">{i + 1}</span>
+                                {/* Little seat cushion graphic */}
+                                <div className={`absolute bottom-0 w-full h-[3px] rounded-t-sm opacity-50 ${isSecured ? "bg-black/20" : selectedWaitlistSeats.includes(seat) ? "bg-amber-500/50" : "bg-white/10"}`}></div>
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                        return (
-                          <button
-                            key={seat}
-                            disabled={false}
-                            onClick={() => {
-                              if (isBooked) {
-                                if (selectedWaitlistSeats.includes(seat)) {
-                                  setSelectedWaitlistSeats(selectedWaitlistSeats.filter((s) => s !== seat));
-                                } else {
-                                  setSelectedWaitlistSeats([...selectedWaitlistSeats, seat]);
-                                  setSelectedSeats([]);
-                                }
-                              } else {
-                                if (isSecured) {
-                                  setSelectedSeats(selectedSeats.filter((s) => s !== seat));
-                                } else {
-                                  setSelectedSeats([...selectedSeats, seat]);
-                                  setSelectedWaitlistSeats([]);
-                                }
-                              }
-                            }}
-                            className={`relative aspect-square w-6 sm:w-8 rounded-t-xl rounded-b-sm border-t-2 border-l border-r border-b text-[9px] sm:text-[10px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
-                                ? selectedWaitlistSeats.includes(seat)
-                                  ? "bg-amber-600/30 text-amber-400 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse"
-                                  : "bg-white/5 text-stone-700 hover:text-stone-400 border-stone-850 opacity-40 hover:opacity-75"
-                                : isSecured
-                                  ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-[#050505] border-[#C5A059] shadow-[0_0_15px_rgba(197,160,89,0.4)] transform -translate-y-1"
-                                  : isVIP
-                                    ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20 hover:-translate-y-0.5"
-                                    : isPREM
-                                      ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15 hover:-translate-y-0.5"
-                                      : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:-translate-y-0.5 hover:border-stone-600"
-                              }`}
-                            title={`${seat} - ${isBooked ? "Booked (Waitlistable)" : isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard Rate"}`}
-                          >
-                            <span className="z-10">{seat.replace(rowLetter, "")}</span>
-                            <div className={`absolute bottom-0 w-full h-[3px] rounded-t-sm opacity-50 ${isSecured ? "bg-black/20" : selectedWaitlistSeats.includes(seat) ? "bg-amber-500/50" : "bg-white/10"}`}></div>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Row Label Right */}
-                    <div className="w-6 text-center text-[10px] font-bold text-stone-600 font-mono select-none">
-                      {rowLetter}
-                    </div>
-                  </div>
-                ))}
+                        {/* Row Label Right */}
+                        <div className="w-6 text-center text-[10px] font-bold text-stone-600 font-mono select-none ml-2">
+                          {rowLetter}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 
@@ -971,18 +977,158 @@ export default function BookingFlow({
               )}
               <div className="flex gap-3 justify-between items-center">
                 <button
-                  onClick={() => { setFoodOrder({}); setStep("payment"); }}
+                  onClick={() => { setFoodOrder({}); setStep("parking"); }}
                   className="px-4 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-stone-400 hover:text-stone-200 font-bold text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer"
                 >
                   Skip Food
                 </button>
                 <button
-                  onClick={() => setStep("payment")}
+                  onClick={() => setStep("parking")}
                   className="px-6 py-2.5 bg-gradient-to-r from-[#C5A059] to-[#F1D299] text-[#050505] font-bold text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-[0_0_15px_rgba(197,160,89,0.2)] hover:opacity-90 flex items-center gap-2"
                 >
                   <ShoppingCart className="w-4 h-4" />
                   Proceed to Payment
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3.5: PARKING SLOT SELECTION */}
+        {step === "parking" && activeShowObj && activeTheatre && (
+          <div className="p-6 sm:p-10 flex flex-col gap-6 animate-fadeIn">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setStep("food")}
+                className="p-2 bg-stone-950 hover:bg-stone-800 rounded-lg text-stone-400 cursor-pointer"
+              >
+                <ArrowBackFallback />
+              </button>
+              <div>
+                <h3 className="text-xl font-bold text-stone-100 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-[#C5A059]" />
+                  Interactive Parking Layout
+                </h3>
+                <p className="text-xs text-stone-400">
+                  {activeShowObj.theatreName}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col xl:flex-row gap-8">
+              {/* Layout Editor / Grids */}
+              <div className="flex-1 flex flex-col gap-8 bg-stone-950/40 border border-stone-850 rounded-3xl p-6 overflow-x-auto">
+                {/* 2-Wheeler Grid */}
+                {twoWheelerGrid.length > 0 && (
+                  <div className="flex flex-col gap-4 min-w-max">
+                    <h4 className="text-sm font-bold text-stone-300 uppercase tracking-widest border-b border-stone-800 pb-2">
+                      2-Wheeler Zone (₹{activeTheatre.parkingTwoWheelerCost})
+                    </h4>
+                    <div className="flex flex-col gap-2 items-center">
+                      {twoWheelerGrid.map((row, rIdx) => (
+                        <div key={rIdx} className="flex gap-2">
+                          <div className="w-6 h-8 flex items-center justify-center text-[10px] font-bold text-stone-500 mr-2">
+                            {String.fromCharCode(65 + rIdx)}
+                          </div>
+                          {row.map(seatId => {
+                            const isBooked = activeShowObj.bookedParkingSeats?.includes(seatId);
+                            const isSelected = selectedParkingSeats.includes(seatId);
+                            return (
+                              <button
+                                key={seatId}
+                                disabled={isBooked}
+                                onClick={() => handleToggleParkingSeat(seatId)}
+                                className={`w-8 h-8 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
+                                  isBooked ? "bg-stone-900 border-stone-800 text-stone-600 cursor-not-allowed" :
+                                  isSelected ? "bg-amber-500 border-amber-400 text-black scale-110 shadow-[0_0_10px_rgba(245,158,11,0.5)]" :
+                                  "bg-stone-900/50 border-stone-700 text-stone-400 hover:border-amber-500 hover:text-amber-500"
+                                }`}
+                                title={seatId}
+                              >
+                                {seatId.split('-')[1]}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4-Wheeler Grid */}
+                {fourWheelerGrid.length > 0 && (
+                  <div className="flex flex-col gap-4 min-w-max">
+                    <h4 className="text-sm font-bold text-stone-300 uppercase tracking-widest border-b border-stone-800 pb-2">
+                      4-Wheeler Zone (₹{activeTheatre.parkingFourWheelerCost})
+                    </h4>
+                    <div className="flex flex-col gap-2 items-center">
+                      {fourWheelerGrid.map((row, rIdx) => (
+                        <div key={rIdx} className="flex gap-2">
+                          <div className="w-6 h-8 flex items-center justify-center text-[10px] font-bold text-stone-500 mr-2">
+                            {String.fromCharCode(65 + rIdx)}
+                          </div>
+                          {row.map(seatId => {
+                            const isBooked = activeShowObj.bookedParkingSeats?.includes(seatId);
+                            const isSelected = selectedParkingSeats.includes(seatId);
+                            return (
+                              <button
+                                key={seatId}
+                                disabled={isBooked}
+                                onClick={() => handleToggleParkingSeat(seatId)}
+                                className={`w-12 h-8 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
+                                  isBooked ? "bg-stone-900 border-stone-800 text-stone-600 cursor-not-allowed" :
+                                  isSelected ? "bg-amber-500 border-amber-400 text-black scale-105 shadow-[0_0_10px_rgba(245,158,11,0.5)]" :
+                                  "bg-stone-900/50 border-stone-700 text-stone-400 hover:border-amber-500 hover:text-amber-500"
+                                }`}
+                                title={seatId}
+                              >
+                                {seatId.split('-')[1]}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Summary & CTA */}
+              <div className="w-full xl:w-80 shrink-0 flex flex-col gap-4">
+                <div className="bg-[#C5A059]/10 border border-[#C5A059]/30 rounded-2xl p-5 flex flex-col gap-4">
+                  <h4 className="text-sm font-bold text-[#F1D299] uppercase tracking-widest border-b border-[#C5A059]/30 pb-2">
+                    Parking Summary
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between text-xs text-stone-300 font-mono">
+                      <span>2-Wheeler Slots:</span>
+                      <span className="font-bold">{selectedParkingSeats.filter(s => s.startsWith("2W-")).length}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-stone-300 font-mono">
+                      <span>4-Wheeler Slots:</span>
+                      <span className="font-bold">{selectedParkingSeats.filter(s => s.startsWith("4W-")).length}</span>
+                    </div>
+                    <div className="flex justify-between text-base text-[#F1D299] font-mono font-bold mt-2 pt-2 border-t border-[#C5A059]/20">
+                      <span>Total:</span>
+                      <span>{formatCurrency(parkingTotalCost)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-black/60 border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
+                  <button
+                    onClick={() => { setSelectedParkingSeats([]); setStep("payment"); }}
+                    className="w-full py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-stone-400 hover:text-stone-200 font-bold text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                  >
+                    Skip Parking
+                  </button>
+                  <button
+                    onClick={() => setStep("payment")}
+                    className="w-full py-2.5 bg-gradient-to-r from-[#C5A059] to-[#F1D299] text-[#050505] font-bold text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-[0_0_15px_rgba(197,160,89,0.2)] hover:opacity-90 flex justify-center items-center gap-2"
+                  >
+                    Proceed to Payment
+                  </button>
+                </div>
               </div>
             </div>
           </div>

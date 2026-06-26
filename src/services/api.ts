@@ -292,3 +292,22 @@ export const watchRoomService = {
 
   getRoom: (roomId: string) => apiCall(`/watch-room/${roomId}`),
 };
+
+export const trailerService = {
+  uploadTrailer: async (formData: FormData) => {
+    let headers: any = {};
+    const token = getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    
+    const response = await fetch(`${API_BASE_URL}/trailers/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Upload failed');
+    return data;
+  },
+
+  searchTrailers: (query: string) => apiCall(`/trailers/search?q=${encodeURIComponent(query)}`),
+};
