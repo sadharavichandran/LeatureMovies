@@ -1197,15 +1197,12 @@ export default function AdminPanel({
                   const vipSeats: string[] = [];
                   const premiumSeats: string[] = [];
                   const regularSeats: string[] = [];
-                  let total = 0; // Initialize total here
-
-                  const total = useTheatreLayout ? theatreLayout.length : showForm.totalSeatsCount;
+                  let total = useTheatreLayout ? theatreLayout.length : showForm.totalSeatsCount;
 
                   if (useTheatreLayout) {
                     // Use the exact seats the admin selected in the theatre layout builder
                     theatreLayout.forEach((seatId: string) => {
                       seatNumbers.push(seatId);
-                      total++;
                       const rowIndex = seatId.charCodeAt(0) - 65;
                       if (rowIndex < theatreVipRows) {
                         vipSeats.push(seatId);
@@ -1217,10 +1214,6 @@ export default function AdminPanel({
                     });
                   } else {
                     // Fallback: generate seats from showForm config
-<<<<<<< HEAD
-                    total = showForm.totalSeatsCount;
-=======
->>>>>>> fdde3fd01eaa83821a42c3efa50b2d763958bd82
                     const seatsPerRow = 10;
                     const totalRows = Math.ceil(total / seatsPerRow);
                     const rowLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1704,11 +1697,11 @@ export default function AdminPanel({
                   <thead>
                     <tr className="bg-stone-900 border-b border-stone-800/80 text-stone-400 font-mono text-xs uppercase tracking-wider">
                       <th className="py-4 px-5">Booking ID</th>
-                      <th className="py-4 px-5">Viewer User</th>
-                      <th className="py-4 px-5">Cinematic / Halle</th>
+                      <th className="py-4 px-5">Viewer/Guest</th>
+                      <th className="py-4 px-5">Movie / Theatre</th>
                       <th className="py-4 px-5">Time Slot</th>
-                      <th className="py-4 px-5">Reserved Seats</th>
-                      <th className="py-4 px-5 text-right">Sum Total</th>
+                      <th className="py-4 px-5">Seats (Count)</th>
+                      <th className="py-4 px-5 text-right">Amount</th>
                       <th className="py-4 px-5 text-center">Payment</th>
                     </tr>
                   </thead>
@@ -1727,40 +1720,45 @@ export default function AdminPanel({
                           <p className="text-[10px] text-stone-500 font-mono">{booking.userEmail}</p>
                         </td>
                         <td className="py-4 px-5">
-                          <p className="text-stone-200 font-medium">{booking.movieTitle}</p>
+                          <p className="text-stone-200 font-medium text-sm">{booking.movieTitle}</p>
                           <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5">
                             <Building2 className="w-3 h-3 text-stone-500" />
                             {booking.theatreName} (Sc {booking.screenNumber})
                           </p>
                         </td>
-                        <td className="py-4 px-5 text-stone-300 font-mono text-xs">
-                          {booking.showDate} <br />
-                          {formatTime12h(booking.showTime)}
+                        <td className="py-4 px-5 text-stone-300 font-mono text-[11px] whitespace-nowrap">
+                          <div>{booking.showDate}</div>
+                          <div className="text-amber-500">{formatTime12h(booking.showTime)}</div>
                         </td>
                         <td className="py-4 px-5">
-                          <div className="flex flex-wrap gap-1">
-                            {booking.seatNumbers.map((sn) => (
+                          <div className="flex flex-wrap gap-0.5">
+                            {booking.seatNumbers.slice(0, 5).map((sn) => (
                               <span
                                 key={sn}
-                                className="px-1.5 py-0.5 bg-stone-900 text-amber-500 font-bold border border-amber-500/10 rounded text-[10.5px] font-mono"
+                                className="px-1.5 py-0.5 bg-stone-900 text-amber-500 font-bold border border-amber-500/10 rounded text-[9px] font-mono"
                               >
                                 {sn}
                               </span>
                             ))}
+                            {booking.seatNumbers.length > 5 && (
+                              <span className="px-1.5 py-0.5 bg-stone-900 text-stone-400 border border-stone-700 rounded text-[9px] font-mono">
+                                +{booking.seatNumbers.length - 5}
+                              </span>
+                            )}
                           </div>
                           <span className="text-[10px] text-stone-500 block mt-1 font-mono">
-                            Count: {booking.ticketCount}
+                            Total: {booking.ticketCount} seat{booking.ticketCount !== 1 ? "s" : ""}
                           </span>
                         </td>
-                        <td className="py-4 px-5 text-right text-stone-100 font-bold font-mono">
+                        <td className="py-4 px-5 text-right text-stone-100 font-bold font-mono text-sm">
                           {formatCurrency(booking.totalAmount)}
                         </td>
                         <td className="py-4 px-5 text-center">
                           <span
-                            className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold font-mono border ${booking.isCancelled
+                            className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border ${booking.isCancelled
                                 ? "bg-red-950/20 text-red-400 border-red-500/20"
                                 : booking.paymentStatus === "Success"
-                                  ? "bg-stone-900 text-amber-400 border-amber-500/30 glow-gold"
+                                  ? "bg-stone-900 text-amber-400 border-amber-500/30"
                                   : "bg-yellow-950/20 text-yellow-500 border-yellow-500/20"
                               }`}
                           >
@@ -1777,7 +1775,7 @@ export default function AdminPanel({
                           className="py-12 text-center text-stone-500 border-t border-stone-800"
                         >
                           <Receipt className="w-8 h-8 mx-auto text-stone-700 mb-2" />
-                          <span>No bookings logged in database yet. Sells appear as users checkout.</span>
+                          <span>No bookings logged yet. Both online user and offline counter bookings appear here.</span>
                         </td>
                       </tr>
                     )}
@@ -2208,6 +2206,7 @@ export default function AdminPanel({
                 foodOrderItems: [],
                 foodDeliveryOption: "counter" as const,
                 foodDeliveryFee: 0,
+                source: "offline" as const,
               };
 
               await onConfirmBooking(bookingData);
