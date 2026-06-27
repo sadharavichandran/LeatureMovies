@@ -1198,6 +1198,8 @@ export default function AdminPanel({
                   const premiumSeats: string[] = [];
                   const regularSeats: string[] = [];
 
+                  const total = useTheatreLayout ? theatreLayout.length : showForm.totalSeatsCount;
+
                   if (useTheatreLayout) {
                     // Use the exact seats the admin selected in the theatre layout builder
                     theatreLayout.forEach((seatId: string) => {
@@ -1213,7 +1215,6 @@ export default function AdminPanel({
                     });
                   } else {
                     // Fallback: generate seats from showForm config
-                    const total = showForm.totalSeatsCount;
                     const seatsPerRow = 10;
                     const totalRows = Math.ceil(total / seatsPerRow);
                     const rowLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1507,85 +1508,7 @@ export default function AdminPanel({
                   </div>
                 </div>
 
-                {/* SEAT CONFIGURATOR SUBSECTION */}
-                <div className="p-4 bg-stone-950/80 border border-stone-800 rounded-2xl flex flex-col gap-4">
-                  <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold uppercase font-mono tracking-widest border-b border-stone-800/60 pb-2">
-                    <Grid className="w-4 h-4" />
-                    Configure Hall Seating Inventory
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-stone-400 font-medium">Total Seats</label>
-                      <select
-                        value={showForm.totalSeatsCount}
-                        onChange={(e) =>
-                          setShowForm({
-                            ...showForm,
-                            totalSeatsCount: parseInt(e.target.value) || 60,
-                          })
-                        }
-                        className="px-2 py-1.5 text-xs bg-stone-900 border border-stone-800 rounded-lg text-stone-200"
-                        disabled={!!showForm.id && shows.find(sh => sh.id === showForm.id)?.bookedSeats.length !== 0}
-                      >
-                        <option value={40}>40 Seats (4 Rows)</option>
-                        <option value={60}>60 Seats (6 Rows)</option>
-                        <option value={80}>80 Seats (8 Rows)</option>
-                        <option value={100}>100 Seats (10 Rows)</option>
-                      </select>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-stone-400 font-medium">VIP Tier Rows</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={4}
-                        value={showForm.vipRows}
-                        onChange={(e) =>
-                          setShowForm({
-                            ...showForm,
-                            vipRows: Math.min(4, parseInt(e.target.value) || 0),
-                          })
-                        }
-                        className="px-2 py-1 bg-stone-900 border border-stone-800 rounded-lg text-stone-200 text-xs"
-                        disabled={!!showForm.id && shows.find(sh => sh.id === showForm.id)?.bookedSeats.length !== 0}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-stone-400 font-medium font-sans">
-                        Premium Tier Rows
-                      </label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={4}
-                        value={showForm.premiumRows}
-                        onChange={(e) =>
-                          setShowForm({
-                            ...showForm,
-                            premiumRows: Math.min(4, parseInt(e.target.value) || 0),
-                          })
-                        }
-                        className="px-2 py-1 bg-stone-900 border border-stone-800 rounded-lg text-stone-200 text-xs"
-                        disabled={!!showForm.id && shows.find(sh => sh.id === showForm.id)?.bookedSeats.length !== 0}
-                      />
-                    </div>
-                  </div>
-
-                  {!!showForm.id && shows.find(sh => sh.id === showForm.id) && (shows.find(sh => sh.id === showForm.id)?.bookedSeats.length || 0) > 0 && (
-                    <span className="text-[10px] text-amber-500 italic">
-                      * Seats cannot be altered after user bookings take place to protect seat integrity.
-                    </span>
-                  )}
-                  <div className="text-[11px] text-stone-500 font-mono leading-relaxed bg-stone-900/60 p-2.5 rounded-xl">
-                    <span className="text-amber-400 font-semibold uppercase block mb-1">Generated Map Schema:</span>
-                    VIP Rows (A-B): {showForm.vipRows * 10} seats [+50% Premium surcharge] <br />
-                    Premium Rows (C-D): {showForm.premiumRows * 10} seats [+25% Premium surcharge]<br />
-                    Regular Rows (E+): {Math.max(0, showForm.totalSeatsCount - (showForm.vipRows + showForm.premiumRows) * 10)} seats [Standard base rate]
-                  </div>
-                </div>
 
                 <div className="flex justify-end gap-3 pt-2">
                   <button
