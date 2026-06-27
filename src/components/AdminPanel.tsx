@@ -1197,11 +1197,13 @@ export default function AdminPanel({
                   const vipSeats: string[] = [];
                   const premiumSeats: string[] = [];
                   const regularSeats: string[] = [];
+                  let total = 0; // Initialize total here
 
                   if (useTheatreLayout) {
                     // Use the exact seats the admin selected in the theatre layout builder
                     theatreLayout.forEach((seatId: string) => {
                       seatNumbers.push(seatId);
+                      total++;
                       const rowIndex = seatId.charCodeAt(0) - 65;
                       if (rowIndex < theatreVipRows) {
                         vipSeats.push(seatId);
@@ -1213,7 +1215,7 @@ export default function AdminPanel({
                     });
                   } else {
                     // Fallback: generate seats from showForm config
-                    const total = showForm.totalSeatsCount;
+                    total = showForm.totalSeatsCount;
                     const seatsPerRow = 10;
                     const totalRows = Math.ceil(total / seatsPerRow);
                     const rowLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -2433,142 +2435,97 @@ export default function AdminPanel({
                       </span>
                     </div>
 
-                    {/* Seating Grid */}
+                    {/* Seating Grid - Exact same layout as user booking */}
                     <div className="w-full flex justify-center py-6 bg-stone-950/20 border border-stone-850/20 rounded-2xl p-4 overflow-x-auto no-scrollbar">
                       <div className="flex flex-col gap-3 min-w-[500px]">
-                        {Object.entries(
-                          activeShowObjLocker.seatNumbers.reduce((acc, seat) => {
-                            const row = seat[0];
-                            if (!acc[row]) acc[row] = [];
-                            acc[row].push(seat);
-                            return acc;
-                          }, {} as Record<string, string[]>)
-                        ).map(([rowLetter, seatsInRow]) => (
-                          <div key={rowLetter} className="flex items-center gap-3 w-full justify-center">
-                            {/* Row Label Left */}
-                            <div className="w-5 text-center text-[10px] font-bold text-stone-600 font-mono select-none">
-                              {rowLetter}
-                            </div>
+                        {(() => {
+                          // Calculate grid dimensions from actual seat IDs to preserve admin layout
+                          const maxRows = activeShowObjLocker.seatNumbers.reduce(
+                            (max: number, seat: string) => Math.max(max, seat.charCodeAt(0) - 64),
+                            0
+                          );
+                          const maxCols = activeShowObjLocker.seatNumbers.reduce(
+                            (max: number, seat: string) => Math.max(max, parseInt(seat.slice(1)) || 0),
+                            0
+                          );
 
-                            {/* Left Block */}
-                            <div className="flex gap-1.5">
-                              {seatsInRow.slice(0, Math.ceil(seatsInRow.length / 2)).map((seat) => {
-                                const isBooked = activeShowObjLocker.bookedSeats.includes(seat);
-                                const isSelected = selectedSeatsForLocker.includes(seat);
-                                const isVIP = activeShowObjLocker.vipSeats.includes(seat);
-                                const isPREM = activeShowObjLocker.premiumSeats.includes(seat);
+                          return Array.from({ length: maxRows }).map((_, rIndex) => {
+                            const rowLetter = String.fromCharCode(65 + rIndex);
+                            return (
+                              <div key={rowLetter} className="flex items-center gap-1.5 w-full justify-center">
+                                {/* Row Label Left */}
+                                <div className="w-5 text-center text-[10px] font-bold text-stone-600 font-mono select-none mr-1">
+                                  {rowLetter}
+                                </div>
 
-                                const borderStyle = isVIP
-                                  ? "border-amber-500/50"
-                                  : isPREM
-                                    ? "border-cyan-500/30"
-                                    : "border-stone-800";
+                                {/* Seat Row */}
+                                <div className="flex gap-1.5">
+                                  {Array.from({ length: maxCols }).map((_, colIndex) => {
+                                    const seat = `${rowLetter}${colIndex + 1}`;
+                                    const exists = activeShowObjLocker.seatNumbers.includes(seat);
 
-                                return (
-                                  <button
-                                    key={seat}
-                                    onClick={() => {
-                                      if (isBooked) return;
-                                      if (isSelected) {
-                                        setSelectedSeatsForLocker(
-                                          selectedSeatsForLocker.filter((s) => s !== seat)
-                                        );
-                                      } else {
-                                        setSelectedSeatsForLocker([...selectedSeatsForLocker, seat]);
-                                      }
-                                    }}
-                                    className={`relative aspect-square w-6 sm:w-7 rounded-t-lg rounded-b-xs border text-[9px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
-                                        ? "bg-stone-900/60 text-stone-600 cursor-not-allowed border-stone-800 opacity-60"
-                                        : isSelected
-                                          ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-stone-950 border-[#C5A059] shadow-[0_0_10px_rgba(197,160,89,0.3)]"
-                                          : isVIP
-                                            ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20"
-                                            : isPREM
-                                              ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15"
-                                              : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:border-stone-600"
-                                      }`}
-                                    title={`${seat} - ${isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard"
-                                      }`}
-                                  >
-                                    {isBooked ? (
-                                      <Lock className="w-2.5 h-2.5 text-stone-600" />
-                                    ) : (
-                                      <span>{seat.replace(rowLetter, "")}</span>
-                                    )}
-                                    <div
-                                      className={`absolute bottom-0 w-full h-[2.5px] rounded-t-xs opacity-45 ${isSelected ? "bg-black/20" : "bg-white/10"
+                                    // Empty gap for non-existent seats
+                                    if (!exists) {
+                                      return <div key={`gap-${seat}`} className="w-6 sm:w-7 flex-shrink-0"></div>;
+                                    }
+
+                                    const isBooked = activeShowObjLocker.bookedSeats.includes(seat);
+                                    const isSelected = selectedSeatsForLocker.includes(seat);
+                                    const isVIP = activeShowObjLocker.vipSeats.includes(seat);
+                                    const isPREM = activeShowObjLocker.premiumSeats.includes(seat);
+
+                                    const borderStyle = isVIP
+                                      ? "border-amber-500/50"
+                                      : isPREM
+                                        ? "border-cyan-500/30"
+                                        : "border-stone-800";
+
+                                    return (
+                                      <button
+                                        key={seat}
+                                        onClick={() => {
+                                          if (isBooked) return;
+                                          if (isSelected) {
+                                            setSelectedSeatsForLocker(
+                                              selectedSeatsForLocker.filter((s) => s !== seat)
+                                            );
+                                          } else {
+                                            setSelectedSeatsForLocker([...selectedSeatsForLocker, seat]);
+                                          }
+                                        }}
+                                        className={`relative aspect-square w-6 sm:w-7 rounded-t-lg rounded-b-xs border text-[9px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
+                                          ? "bg-stone-900/60 text-stone-600 cursor-not-allowed border-stone-800 opacity-60"
+                                          : isSelected
+                                            ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-stone-950 border-[#C5A059] shadow-[0_0_10px_rgba(197,160,89,0.3)]"
+                                            : isVIP
+                                              ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20"
+                                              : isPREM
+                                                ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15"
+                                                : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:border-stone-600"
                                         }`}
-                                    ></div>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                                        title={`${seat} - ${isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard"}`}
+                                      >
+                                        {isBooked ? (
+                                          <Lock className="w-2.5 h-2.5 text-stone-600" />
+                                        ) : (
+                                          <span>{colIndex + 1}</span>
+                                        )}
+                                        <div
+                                          className={`absolute bottom-0 w-full h-[2.5px] rounded-t-xs opacity-45 ${isSelected ? "bg-black/20" : "bg-white/10"}`}
+                                        ></div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
 
-                            {/* Center Aisle */}
-                            <div className="w-4 flex items-center justify-center">
-                              <div className="h-full w-[1px] bg-white/5 border-l border-dashed border-stone-800"></div>
-                            </div>
-
-                            {/* Right Block */}
-                            <div className="flex gap-1.5">
-                              {seatsInRow.slice(Math.ceil(seatsInRow.length / 2)).map((seat) => {
-                                const isBooked = activeShowObjLocker.bookedSeats.includes(seat);
-                                const isSelected = selectedSeatsForLocker.includes(seat);
-                                const isVIP = activeShowObjLocker.vipSeats.includes(seat);
-                                const isPREM = activeShowObjLocker.premiumSeats.includes(seat);
-
-                                const borderStyle = isVIP
-                                  ? "border-amber-500/50"
-                                  : isPREM
-                                    ? "border-cyan-500/30"
-                                    : "border-stone-800";
-
-                                return (
-                                  <button
-                                    key={seat}
-                                    onClick={() => {
-                                      if (isBooked) return;
-                                      if (isSelected) {
-                                        setSelectedSeatsForLocker(
-                                          selectedSeatsForLocker.filter((s) => s !== seat)
-                                        );
-                                      } else {
-                                        setSelectedSeatsForLocker([...selectedSeatsForLocker, seat]);
-                                      }
-                                    }}
-                                    className={`relative aspect-square w-6 sm:w-7 rounded-t-lg rounded-b-xs border text-[9px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
-                                        ? "bg-stone-900/60 text-stone-600 cursor-not-allowed border-stone-800 opacity-60"
-                                        : isSelected
-                                          ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-stone-950 border-[#C5A059] shadow-[0_0_10px_rgba(197,160,89,0.3)]"
-                                          : isVIP
-                                            ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20"
-                                            : isPREM
-                                              ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15"
-                                              : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:border-stone-600"
-                                      }`}
-                                    title={`${seat} - ${isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard"
-                                      }`}
-                                  >
-                                    {isBooked ? (
-                                      <Lock className="w-2.5 h-2.5 text-stone-600" />
-                                    ) : (
-                                      <span>{seat.replace(rowLetter, "")}</span>
-                                    )}
-                                    <div
-                                      className={`absolute bottom-0 w-full h-[2.5px] rounded-t-xs opacity-45 ${isSelected ? "bg-black/20" : "bg-white/10"
-                                        }`}
-                                    ></div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-
-                            {/* Row Label Right */}
-                            <div className="w-5 text-center text-[10px] font-bold text-stone-600 font-mono select-none">
-                              {rowLetter}
-                            </div>
-                          </div>
-                        ))}
+                                {/* Row Label Right */}
+                                <div className="w-5 text-center text-[10px] font-bold text-stone-600 font-mono select-none ml-1">
+                                  {rowLetter}
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
 

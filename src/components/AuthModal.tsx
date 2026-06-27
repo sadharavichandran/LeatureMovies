@@ -10,6 +10,7 @@ import {
   CheckCircle,
   HelpCircle,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { authService } from "../services/api";
 
 interface AuthModalProps {
@@ -31,6 +32,7 @@ export default function AuthModal({
 }: AuthModalProps) {
   const [role, setRole] = useState<"user" | "admin">(initialRole);
   const [isRegister, setIsRegister] = useState(initialIsRegister);
+  const { t } = useTranslation();
 
   // Sync inputs with modal open props
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function AuthModal({
   // Handle triggering simulated OTP sms
   const triggerOtpSend = () => {
     if (!mobileNumber || mobileNumber.length < 10) {
-      onShowToast("Please enter a valid 10-digit mobile number.", "error");
+      onShowToast(t('auth.validMobile'), "error");
       return;
     }
     setIsSendingOtp(true);
@@ -71,7 +73,7 @@ export default function AuthModal({
       setOtpSent(true);
       setIsSendingOtp(false);
       onShowToast(
-        `SMS OTP Sent to +91-${mobileNumber}! Simulated activation pin is: ${code}`,
+        t('auth.otpSent', { mobile: mobileNumber, otp: code }),
         "success"
       );
     }, 1200);
@@ -81,9 +83,9 @@ export default function AuthModal({
   const handleVerifyOtp = () => {
     if (inputOtp === generatedOtp && inputOtp !== "") {
       setOtpVerified(true);
-      onShowToast("Mobile OTP code verified successfully!", "success");
+      onShowToast(t('auth.otpVerifiedSuccess'), "success");
     } else {
-      onShowToast("Incorrect OTP code. Please retry.", "error");
+      onShowToast(t('auth.otpIncorrect'), "error");
     }
   };
 
@@ -96,12 +98,12 @@ export default function AuthModal({
       if (isRegister) {
         // Sign Up validations
         if (password !== confirmPassword) {
-          onShowToast("Passwords do not match.", "error");
+          onShowToast(t('auth.passwordMismatch'), "error");
           setIsLoading(false);
           return;
         }
         if (!otpVerified) {
-          onShowToast("Please complete the mobile OTP Verification first.", "error");
+          onShowToast(t('auth.completeOtp'), "error");
           setIsLoading(false);
           return;
         }
@@ -110,7 +112,7 @@ export default function AuthModal({
         const response = await authService.register(fullName, email, mobileNumber, password, role);
         authService.setAuthToken(response.token);
 
-        onShowToast(`${role === "admin" ? "Admin" : "User"} profile registered!`, "success");
+        onShowToast(t('auth.profileRegistered', { role: role === "admin" ? "Admin" : "User" }), "success");
         onAuthSuccess(response.user);
         onClose();
       } else {
@@ -118,7 +120,7 @@ export default function AuthModal({
         const response = await authService.login(email, password);
         authService.setAuthToken(response.token);
 
-        onShowToast(`Signed in successfully!`, "success");
+        onShowToast(t('auth.signedIn'), "success");
         onAuthSuccess(response.user);
         onClose();
       }
@@ -149,11 +151,11 @@ export default function AuthModal({
           </div>
           <h2 className="text-2xl font-serif font-bold tracking-tight text-white text-center">
             {isRegister
-              ? `Register Profile`
-              : `${role === "admin" ? "Admin" : "Member"} Access`}
+              ? t('auth.registerProfile')
+              : `${role === "admin" ? t('auth.adminAccess') : t('auth.memberAccess')}`}
           </h2>
           <p className="text-[#C5A059] text-[9px] uppercase font-bold tracking-[0.2em] text-center mt-1">
-            Leature Secured Interface
+            {t('auth.securedInterface')}
           </p>
         </div>
 
@@ -166,7 +168,7 @@ export default function AuthModal({
               role === "user" ? "bg-white/5 text-[#F1D299]" : "text-stone-500 hover:text-stone-300"
             }`}
           >
-            User Login
+            {t('auth.userLogin')}
           </button>
           <button
             type="button"
@@ -175,14 +177,14 @@ export default function AuthModal({
               role === "admin" ? "bg-white/5 text-[#F1D299]" : "text-stone-500 hover:text-stone-300"
             }`}
           >
-            Admin Vault
+            {t('auth.adminVault')}
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {isRegister && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] uppercase tracking-wider text-stone-400 pl-1">Full Name</label>
+              <label className="text-[10px] uppercase tracking-wider text-stone-400 pl-1">{t('auth.fullName')}</label>
               <div className="relative">
                 <User className="absolute left-3.5 top-3.5 w-4 h-4 text-stone-500" />
                 <input
@@ -198,7 +200,7 @@ export default function AuthModal({
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] uppercase tracking-wider text-stone-400 pl-1">Email Address</label>
+            <label className="text-[10px] uppercase tracking-wider text-stone-400 pl-1">{t('auth.emailAddress')}</label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-stone-500" />
               <input
@@ -215,7 +217,7 @@ export default function AuthModal({
           {/* OTP and Mobile trigger on SIGN UP */}
           {isRegister && (
             <div className="flex flex-col gap-3 p-3 bg-white/2 border border-white/5 rounded-xl">
-              <label className="text-[10px] uppercase tracking-wider text-[#C5A059] font-bold block pl-1">Mobile Authentication</label>
+              <label className="text-[10px] uppercase tracking-wider text-[#C5A059] font-bold block pl-1">{t('auth.mobileAuth')}</label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Phone className="absolute left-3.5 top-3 w-4 h-4 text-stone-500" />
@@ -235,7 +237,7 @@ export default function AuthModal({
                   onClick={triggerOtpSend}
                   className="px-4 py-2 bg-gradient-to-r from-[#C5A059] to-[#F1D299] text-[#050505] disabled:bg-[#1a1a1a] disabled:text-stone-500 text-[10px] font-bold uppercase tracking-wider rounded-xl cursor-pointer transition-all shrink-0 hover:opacity-90"
                 >
-                  {isSendingOtp ? "Sending..." : otpVerified ? "Verified" : "Send PIN"}
+                  {isSendingOtp ? t('auth.sending') : otpVerified ? t('auth.verified') : t('auth.sendPin')}
                 </button>
               </div>
 
@@ -257,7 +259,7 @@ export default function AuthModal({
                     onClick={handleVerifyOtp}
                     className="px-4 py-2 bg-[#0a0a0a] border border-white/10 text-[#C5A059] text-[10px] font-bold uppercase tracking-wider rounded-xl hover:bg-white/5"
                   >
-                    Verify
+                    {t('auth.verifyOtp')}
                   </button>
                 </div>
               )}
@@ -265,14 +267,14 @@ export default function AuthModal({
               {otpVerified && (
                 <div className="flex items-center gap-2 text-[10px] text-[#C5A059] font-bold font-mono pl-1 tracking-wider uppercase">
                   <CheckCircle className="w-4 h-4 shrink-0" />
-                  <span>Verified Device Profile</span>
+                  <span>{t('auth.verifiedDevice')}</span>
                 </div>
               )}
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] uppercase tracking-wider text-stone-400 pl-1">Password</label>
+            <label className="text-[10px] uppercase tracking-wider text-stone-400 pl-1">{t('auth.password')}</label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-stone-500" />
               <input
@@ -288,7 +290,7 @@ export default function AuthModal({
 
           {isRegister && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] uppercase tracking-wider text-stone-400 pl-1">Confirm Password</label>
+              <label className="text-[10px] uppercase tracking-wider text-stone-400 pl-1">{t('auth.confirmPassword')}</label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-stone-500" />
                 <input
@@ -311,16 +313,16 @@ export default function AuthModal({
             {isLoading ? (
               <span className="w-4 h-4 border-2 border-stone-950 border-t-transparent rounded-full animate-spin" />
             ) : isRegister ? (
-              "Create Member Profile"
+              t('auth.createProfile')
             ) : (
-              "Unlock Member Session"
+              t('auth.unlockSession')
             )}
           </button>
         </form>
 
         {/* Change register/sign-in view trigger links */}
         <div className="mt-6 text-center text-xs text-stone-500">
-          {isRegister ? "Already registered at Leature?" : "New to Leature Movies?"}{" "}
+          {isRegister ? t('auth.alreadyRegistered') : t('auth.newToLeature')}{" "}
           <button
             type="button"
             onClick={() => {
@@ -332,7 +334,7 @@ export default function AuthModal({
             }}
             className="text-[#C5A059] hover:text-[#F1D299] font-bold transition-all underline outline-none cursor-pointer"
           >
-            {isRegister ? "Login instead" : "Create account"}
+            {isRegister ? t('auth.loginInstead') : t('auth.createAccount')}
           </button>
         </div>
 
@@ -341,7 +343,7 @@ export default function AuthModal({
           <div className="mt-5 p-4 bg-white/2 border border-white/5 rounded-2xl flex gap-2 items-start text-stone-500 font-mono text-[9px] leading-relaxed">
             <HelpCircle className="w-4 h-4 text-[#C5A059] shrink-0 mt-0.5" />
             <span>
-              * Under security rules, the developer email (sadha2299@gmail.com) is dynamically mapped as super admin write capability.
+              {t('auth.adminNote')}
             </span>
           </div>
         )}

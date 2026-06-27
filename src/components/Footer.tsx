@@ -1,44 +1,45 @@
-import { Film, Mail, Phone, MapPin, Space as Facebook, Instagram, Twitter, MessageCircle, Globe } from "lucide-react";
+import { Mail, Phone, Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface FooterProps {
   onNavigateHome: () => void;
 }
 
 export default function Footer({ onNavigateHome }: FooterProps) {
+  const { t } = useTranslation();
+  const year = new Date().getFullYear();
+
   return (
     <footer className="bg-[#050505] border-t border-white/5 pt-16 pb-8 text-stone-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Brand/Slogan */}
           <div className="flex flex-col gap-4">
-            <div
-              onClick={onNavigateHome}
-              className="flex items-center gap-3 cursor-pointer select-none group"
-            >
+            <div onClick={onNavigateHome} className="flex items-center gap-3 cursor-pointer select-none group">
               <img src="/logo.png" alt="Leature Logo" className="h-8 md:h-10 object-contain group-hover:brightness-110 transition-all" />
             </div>
             <p className="text-xs leading-relaxed text-stone-400 mt-2">
-              Experience movie ticket booking redesigned. Dynamic schedules, premium halls, physical-matching visual interactive seat selectors, and state-of-the-art cinematic luxury.
+              {t('footer.tagline')}
             </p>
           </div>
 
-          {/* Location Locations */}
+          {/* Locations */}
           <div>
             <h3 className="text-stone-100 font-serif font-semibold text-xs tracking-widest uppercase mb-4 text-[#C5A059]">
-              Our Locations
+              {t('footer.ourLocations')}
             </h3>
             <ul className="flex flex-col gap-3 text-xs">
               <li className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <span>Downtown Premium Luxe (Screen 1-5)</span>
+                <Phone className="w-4 h-4 text-[#C5A059] shrink-0" />
+                <span>{t('footer.location1')}</span>
               </li>
               <li className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <span>Sunset Galleria (Screen 1-3)</span>
+                <Phone className="w-4 h-4 text-[#C5A059] shrink-0" />
+                <span>{t('footer.location2')}</span>
               </li>
               <li className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <span>The Atrium Mall (Screen 1-4)</span>
+                <Phone className="w-4 h-4 text-[#C5A059] shrink-0" />
+                <span>{t('footer.location3')}</span>
               </li>
             </ul>
           </div>
@@ -46,68 +47,50 @@ export default function Footer({ onNavigateHome }: FooterProps) {
           {/* Quick links */}
           <div>
             <h3 className="text-stone-100 font-serif font-semibold text-xs tracking-widest uppercase mb-4 text-[#C5A059]">
-              Quick Shortcuts
+              {t('footer.quickShortcuts')}
             </h3>
             <ul className="flex flex-col gap-3 text-xs">
               <li>
-                <button
-                  type="button"
-                  onClick={onNavigateHome}
-                  className="hover:text-[#C5A059] transition-colors text-left"
-                >
-                  Now Showing
+                <button type="button" onClick={onNavigateHome} className="hover:text-[#C5A059] transition-colors text-left">
+                  {t('footer.nowShowing')}
                 </button>
               </li>
               <li>
-                <span className="text-stone-500 text-xs">(Upcoming announcements coming soon!)</span>
+                <span className="text-stone-500 text-xs">{t('footer.upcomingSoon')}</span>
               </li>
               <li>
                 <span className="hover:text-[#C5A059] transition-colors cursor-pointer text-left">
-                  Corporate Cinema Booking
+                  {t('footer.corporateBooking')}
                 </span>
               </li>
             </ul>
           </div>
 
-          {/* Contact Details */}
+          {/* Contact */}
           <div>
             <h3 className="text-stone-100 font-serif font-semibold text-xs tracking-widest uppercase mb-4 text-[#C5A059]">
-              Customer Support
+              {t('footer.customerSupport')}
             </h3>
             <div className="flex gap-3">
-              <a
-                href="tel:+9173056-73956"
-                className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-[#C5A059] hover:border-[#C5A059]/30 transition-all shadow-md cursor-pointer flex items-center justify-center text-stone-400"
-                title="Call Support: +91 73056-73956"
-              >
+              <a href="tel:+9173056-73956" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-[#C5A059] hover:border-[#C5A059]/30 transition-all shadow-md cursor-pointer flex items-center justify-center text-stone-400" title="Call Support: +91 73056-73956">
                 <Phone className="w-5 h-5" />
               </a>
-              <a
-                href="mailto:career@leaturetech.com"
-                className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-[#C5A059] hover:border-[#C5A059]/30 transition-all shadow-md cursor-pointer flex items-center justify-center text-stone-400"
-                title="Email: career@leaturetech.com"
-              >
+              <a href="mailto:career@leaturetech.com" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-[#C5A059] hover:border-[#C5A059]/30 transition-all shadow-md cursor-pointer flex items-center justify-center text-stone-400" title="Email: career@leaturetech.com">
                 <Mail className="w-5 h-5" />
               </a>
-              <a
-                href="https://www.leaturetech.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-[#C5A059] hover:border-[#C5A059]/30 transition-all shadow-md cursor-pointer flex items-center justify-center text-stone-400"
-                title="Website: www.leaturetech.com"
-              >
+              <a href="https://www.leaturetech.com" target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-[#C5A059] hover:border-[#C5A059]/30 transition-all shadow-md cursor-pointer flex items-center justify-center text-stone-400" title="Website: www.leaturetech.com">
                 <Globe className="w-5 h-5" />
               </a>
             </div>
           </div>
         </div>
 
-        {/* Brand Copyright */}
+        {/* Copyright */}
         <div className="pt-8 border-t border-white/5 text-center text-xs flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-stone-500">© {new Date().getFullYear()} Leature Movies Ltd. Crafted for complete premium comfort.</p>
+          <p className="text-stone-500">{t('footer.copyright', { year })}</p>
           <div className="flex gap-6 text-stone-500">
-            <span className="hover:text-[#C5A059] cursor-pointer">Terms of Service</span>
-            <span className="hover:text-[#C5A059] cursor-pointer">Privacy Guidelines</span>
+            <span className="hover:text-[#C5A059] cursor-pointer">{t('footer.terms')}</span>
+            <span className="hover:text-[#C5A059] cursor-pointer">{t('footer.privacy')}</span>
           </div>
         </div>
       </div>
