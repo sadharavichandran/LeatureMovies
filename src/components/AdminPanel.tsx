@@ -1197,6 +1197,7 @@ export default function AdminPanel({
                   const vipSeats: string[] = [];
                   const premiumSeats: string[] = [];
                   const regularSeats: string[] = [];
+                  let total = useTheatreLayout ? theatreLayout.length : showForm.totalSeatsCount;
 
                   if (useTheatreLayout) {
                     // Use the exact seats the admin selected in the theatre layout builder
@@ -1213,7 +1214,6 @@ export default function AdminPanel({
                     });
                   } else {
                     // Fallback: generate seats from showForm config
-                    const total = showForm.totalSeatsCount;
                     const seatsPerRow = 10;
                     const totalRows = Math.ceil(total / seatsPerRow);
                     const rowLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1507,85 +1507,7 @@ export default function AdminPanel({
                   </div>
                 </div>
 
-                {/* SEAT CONFIGURATOR SUBSECTION */}
-                <div className="p-4 bg-stone-950/80 border border-stone-800 rounded-2xl flex flex-col gap-4">
-                  <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold uppercase font-mono tracking-widest border-b border-stone-800/60 pb-2">
-                    <Grid className="w-4 h-4" />
-                    Configure Hall Seating Inventory
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-stone-400 font-medium">Total Seats</label>
-                      <select
-                        value={showForm.totalSeatsCount}
-                        onChange={(e) =>
-                          setShowForm({
-                            ...showForm,
-                            totalSeatsCount: parseInt(e.target.value) || 60,
-                          })
-                        }
-                        className="px-2 py-1.5 text-xs bg-stone-900 border border-stone-800 rounded-lg text-stone-200"
-                        disabled={!!showForm.id && shows.find(sh => sh.id === showForm.id)?.bookedSeats.length !== 0}
-                      >
-                        <option value={40}>40 Seats (4 Rows)</option>
-                        <option value={60}>60 Seats (6 Rows)</option>
-                        <option value={80}>80 Seats (8 Rows)</option>
-                        <option value={100}>100 Seats (10 Rows)</option>
-                      </select>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-stone-400 font-medium">VIP Tier Rows</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={4}
-                        value={showForm.vipRows}
-                        onChange={(e) =>
-                          setShowForm({
-                            ...showForm,
-                            vipRows: Math.min(4, parseInt(e.target.value) || 0),
-                          })
-                        }
-                        className="px-2 py-1 bg-stone-900 border border-stone-800 rounded-lg text-stone-200 text-xs"
-                        disabled={!!showForm.id && shows.find(sh => sh.id === showForm.id)?.bookedSeats.length !== 0}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] text-stone-400 font-medium font-sans">
-                        Premium Tier Rows
-                      </label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={4}
-                        value={showForm.premiumRows}
-                        onChange={(e) =>
-                          setShowForm({
-                            ...showForm,
-                            premiumRows: Math.min(4, parseInt(e.target.value) || 0),
-                          })
-                        }
-                        className="px-2 py-1 bg-stone-900 border border-stone-800 rounded-lg text-stone-200 text-xs"
-                        disabled={!!showForm.id && shows.find(sh => sh.id === showForm.id)?.bookedSeats.length !== 0}
-                      />
-                    </div>
-                  </div>
-
-                  {!!showForm.id && shows.find(sh => sh.id === showForm.id) && (shows.find(sh => sh.id === showForm.id)?.bookedSeats.length || 0) > 0 && (
-                    <span className="text-[10px] text-amber-500 italic">
-                      * Seats cannot be altered after user bookings take place to protect seat integrity.
-                    </span>
-                  )}
-                  <div className="text-[11px] text-stone-500 font-mono leading-relaxed bg-stone-900/60 p-2.5 rounded-xl">
-                    <span className="text-amber-400 font-semibold uppercase block mb-1">Generated Map Schema:</span>
-                    VIP Rows (A-B): {showForm.vipRows * 10} seats [+50% Premium surcharge] <br />
-                    Premium Rows (C-D): {showForm.premiumRows * 10} seats [+25% Premium surcharge]<br />
-                    Regular Rows (E+): {Math.max(0, showForm.totalSeatsCount - (showForm.vipRows + showForm.premiumRows) * 10)} seats [Standard base rate]
-                  </div>
-                </div>
 
                 <div className="flex justify-end gap-3 pt-2">
                   <button
@@ -1775,11 +1697,11 @@ export default function AdminPanel({
                   <thead>
                     <tr className="bg-stone-900 border-b border-stone-800/80 text-stone-400 font-mono text-xs uppercase tracking-wider">
                       <th className="py-4 px-5">Booking ID</th>
-                      <th className="py-4 px-5">Viewer User</th>
-                      <th className="py-4 px-5">Cinematic / Halle</th>
+                      <th className="py-4 px-5">Viewer/Guest</th>
+                      <th className="py-4 px-5">Movie / Theatre</th>
                       <th className="py-4 px-5">Time Slot</th>
-                      <th className="py-4 px-5">Reserved Seats</th>
-                      <th className="py-4 px-5 text-right">Sum Total</th>
+                      <th className="py-4 px-5">Seats (Count)</th>
+                      <th className="py-4 px-5 text-right">Amount</th>
                       <th className="py-4 px-5 text-center">Payment</th>
                     </tr>
                   </thead>
@@ -1798,40 +1720,45 @@ export default function AdminPanel({
                           <p className="text-[10px] text-stone-500 font-mono">{booking.userEmail}</p>
                         </td>
                         <td className="py-4 px-5">
-                          <p className="text-stone-200 font-medium">{booking.movieTitle}</p>
+                          <p className="text-stone-200 font-medium text-sm">{booking.movieTitle}</p>
                           <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5">
                             <Building2 className="w-3 h-3 text-stone-500" />
                             {booking.theatreName} (Sc {booking.screenNumber})
                           </p>
                         </td>
-                        <td className="py-4 px-5 text-stone-300 font-mono text-xs">
-                          {booking.showDate} <br />
-                          {formatTime12h(booking.showTime)}
+                        <td className="py-4 px-5 text-stone-300 font-mono text-[11px] whitespace-nowrap">
+                          <div>{booking.showDate}</div>
+                          <div className="text-amber-500">{formatTime12h(booking.showTime)}</div>
                         </td>
                         <td className="py-4 px-5">
-                          <div className="flex flex-wrap gap-1">
-                            {booking.seatNumbers.map((sn) => (
+                          <div className="flex flex-wrap gap-0.5">
+                            {booking.seatNumbers.slice(0, 5).map((sn) => (
                               <span
                                 key={sn}
-                                className="px-1.5 py-0.5 bg-stone-900 text-amber-500 font-bold border border-amber-500/10 rounded text-[10.5px] font-mono"
+                                className="px-1.5 py-0.5 bg-stone-900 text-amber-500 font-bold border border-amber-500/10 rounded text-[9px] font-mono"
                               >
                                 {sn}
                               </span>
                             ))}
+                            {booking.seatNumbers.length > 5 && (
+                              <span className="px-1.5 py-0.5 bg-stone-900 text-stone-400 border border-stone-700 rounded text-[9px] font-mono">
+                                +{booking.seatNumbers.length - 5}
+                              </span>
+                            )}
                           </div>
                           <span className="text-[10px] text-stone-500 block mt-1 font-mono">
-                            Count: {booking.ticketCount}
+                            Total: {booking.ticketCount} seat{booking.ticketCount !== 1 ? "s" : ""}
                           </span>
                         </td>
-                        <td className="py-4 px-5 text-right text-stone-100 font-bold font-mono">
+                        <td className="py-4 px-5 text-right text-stone-100 font-bold font-mono text-sm">
                           {formatCurrency(booking.totalAmount)}
                         </td>
                         <td className="py-4 px-5 text-center">
                           <span
-                            className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold font-mono border ${booking.isCancelled
+                            className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border ${booking.isCancelled
                                 ? "bg-red-950/20 text-red-400 border-red-500/20"
                                 : booking.paymentStatus === "Success"
-                                  ? "bg-stone-900 text-amber-400 border-amber-500/30 glow-gold"
+                                  ? "bg-stone-900 text-amber-400 border-amber-500/30"
                                   : "bg-yellow-950/20 text-yellow-500 border-yellow-500/20"
                               }`}
                           >
@@ -1848,7 +1775,7 @@ export default function AdminPanel({
                           className="py-12 text-center text-stone-500 border-t border-stone-800"
                         >
                           <Receipt className="w-8 h-8 mx-auto text-stone-700 mb-2" />
-                          <span>No bookings logged in database yet. Sells appear as users checkout.</span>
+                          <span>No bookings logged yet. Both online user and offline counter bookings appear here.</span>
                         </td>
                       </tr>
                     )}
@@ -2279,6 +2206,7 @@ export default function AdminPanel({
                 foodOrderItems: [],
                 foodDeliveryOption: "counter" as const,
                 foodDeliveryFee: 0,
+                source: "offline" as const,
               };
 
               await onConfirmBooking(bookingData);
@@ -2433,142 +2361,97 @@ export default function AdminPanel({
                       </span>
                     </div>
 
-                    {/* Seating Grid */}
+                    {/* Seating Grid - Exact same layout as user booking */}
                     <div className="w-full flex justify-center py-6 bg-stone-950/20 border border-stone-850/20 rounded-2xl p-4 overflow-x-auto no-scrollbar">
                       <div className="flex flex-col gap-3 min-w-[500px]">
-                        {Object.entries(
-                          activeShowObjLocker.seatNumbers.reduce((acc, seat) => {
-                            const row = seat[0];
-                            if (!acc[row]) acc[row] = [];
-                            acc[row].push(seat);
-                            return acc;
-                          }, {} as Record<string, string[]>)
-                        ).map(([rowLetter, seatsInRow]) => (
-                          <div key={rowLetter} className="flex items-center gap-3 w-full justify-center">
-                            {/* Row Label Left */}
-                            <div className="w-5 text-center text-[10px] font-bold text-stone-600 font-mono select-none">
-                              {rowLetter}
-                            </div>
+                        {(() => {
+                          // Calculate grid dimensions from actual seat IDs to preserve admin layout
+                          const maxRows = activeShowObjLocker.seatNumbers.reduce(
+                            (max: number, seat: string) => Math.max(max, seat.charCodeAt(0) - 64),
+                            0
+                          );
+                          const maxCols = activeShowObjLocker.seatNumbers.reduce(
+                            (max: number, seat: string) => Math.max(max, parseInt(seat.slice(1)) || 0),
+                            0
+                          );
 
-                            {/* Left Block */}
-                            <div className="flex gap-1.5">
-                              {seatsInRow.slice(0, Math.ceil(seatsInRow.length / 2)).map((seat) => {
-                                const isBooked = activeShowObjLocker.bookedSeats.includes(seat);
-                                const isSelected = selectedSeatsForLocker.includes(seat);
-                                const isVIP = activeShowObjLocker.vipSeats.includes(seat);
-                                const isPREM = activeShowObjLocker.premiumSeats.includes(seat);
+                          return Array.from({ length: maxRows }).map((_, rIndex) => {
+                            const rowLetter = String.fromCharCode(65 + rIndex);
+                            return (
+                              <div key={rowLetter} className="flex items-center gap-1.5 w-full justify-center">
+                                {/* Row Label Left */}
+                                <div className="w-5 text-center text-[10px] font-bold text-stone-600 font-mono select-none mr-1">
+                                  {rowLetter}
+                                </div>
 
-                                const borderStyle = isVIP
-                                  ? "border-amber-500/50"
-                                  : isPREM
-                                    ? "border-cyan-500/30"
-                                    : "border-stone-800";
+                                {/* Seat Row */}
+                                <div className="flex gap-1.5">
+                                  {Array.from({ length: maxCols }).map((_, colIndex) => {
+                                    const seat = `${rowLetter}${colIndex + 1}`;
+                                    const exists = activeShowObjLocker.seatNumbers.includes(seat);
 
-                                return (
-                                  <button
-                                    key={seat}
-                                    onClick={() => {
-                                      if (isBooked) return;
-                                      if (isSelected) {
-                                        setSelectedSeatsForLocker(
-                                          selectedSeatsForLocker.filter((s) => s !== seat)
-                                        );
-                                      } else {
-                                        setSelectedSeatsForLocker([...selectedSeatsForLocker, seat]);
-                                      }
-                                    }}
-                                    className={`relative aspect-square w-6 sm:w-7 rounded-t-lg rounded-b-xs border text-[9px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
-                                        ? "bg-stone-900/60 text-stone-600 cursor-not-allowed border-stone-800 opacity-60"
-                                        : isSelected
-                                          ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-stone-950 border-[#C5A059] shadow-[0_0_10px_rgba(197,160,89,0.3)]"
-                                          : isVIP
-                                            ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20"
-                                            : isPREM
-                                              ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15"
-                                              : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:border-stone-600"
-                                      }`}
-                                    title={`${seat} - ${isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard"
-                                      }`}
-                                  >
-                                    {isBooked ? (
-                                      <Lock className="w-2.5 h-2.5 text-stone-600" />
-                                    ) : (
-                                      <span>{seat.replace(rowLetter, "")}</span>
-                                    )}
-                                    <div
-                                      className={`absolute bottom-0 w-full h-[2.5px] rounded-t-xs opacity-45 ${isSelected ? "bg-black/20" : "bg-white/10"
+                                    // Empty gap for non-existent seats
+                                    if (!exists) {
+                                      return <div key={`gap-${seat}`} className="w-6 sm:w-7 flex-shrink-0"></div>;
+                                    }
+
+                                    const isBooked = activeShowObjLocker.bookedSeats.includes(seat);
+                                    const isSelected = selectedSeatsForLocker.includes(seat);
+                                    const isVIP = activeShowObjLocker.vipSeats.includes(seat);
+                                    const isPREM = activeShowObjLocker.premiumSeats.includes(seat);
+
+                                    const borderStyle = isVIP
+                                      ? "border-amber-500/50"
+                                      : isPREM
+                                        ? "border-cyan-500/30"
+                                        : "border-stone-800";
+
+                                    return (
+                                      <button
+                                        key={seat}
+                                        onClick={() => {
+                                          if (isBooked) return;
+                                          if (isSelected) {
+                                            setSelectedSeatsForLocker(
+                                              selectedSeatsForLocker.filter((s) => s !== seat)
+                                            );
+                                          } else {
+                                            setSelectedSeatsForLocker([...selectedSeatsForLocker, seat]);
+                                          }
+                                        }}
+                                        className={`relative aspect-square w-6 sm:w-7 rounded-t-lg rounded-b-xs border text-[9px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
+                                          ? "bg-stone-900/60 text-stone-600 cursor-not-allowed border-stone-800 opacity-60"
+                                          : isSelected
+                                            ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-stone-950 border-[#C5A059] shadow-[0_0_10px_rgba(197,160,89,0.3)]"
+                                            : isVIP
+                                              ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20"
+                                              : isPREM
+                                                ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15"
+                                                : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:border-stone-600"
                                         }`}
-                                    ></div>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                                        title={`${seat} - ${isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard"}`}
+                                      >
+                                        {isBooked ? (
+                                          <Lock className="w-2.5 h-2.5 text-stone-600" />
+                                        ) : (
+                                          <span>{colIndex + 1}</span>
+                                        )}
+                                        <div
+                                          className={`absolute bottom-0 w-full h-[2.5px] rounded-t-xs opacity-45 ${isSelected ? "bg-black/20" : "bg-white/10"}`}
+                                        ></div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
 
-                            {/* Center Aisle */}
-                            <div className="w-4 flex items-center justify-center">
-                              <div className="h-full w-[1px] bg-white/5 border-l border-dashed border-stone-800"></div>
-                            </div>
-
-                            {/* Right Block */}
-                            <div className="flex gap-1.5">
-                              {seatsInRow.slice(Math.ceil(seatsInRow.length / 2)).map((seat) => {
-                                const isBooked = activeShowObjLocker.bookedSeats.includes(seat);
-                                const isSelected = selectedSeatsForLocker.includes(seat);
-                                const isVIP = activeShowObjLocker.vipSeats.includes(seat);
-                                const isPREM = activeShowObjLocker.premiumSeats.includes(seat);
-
-                                const borderStyle = isVIP
-                                  ? "border-amber-500/50"
-                                  : isPREM
-                                    ? "border-cyan-500/30"
-                                    : "border-stone-800";
-
-                                return (
-                                  <button
-                                    key={seat}
-                                    onClick={() => {
-                                      if (isBooked) return;
-                                      if (isSelected) {
-                                        setSelectedSeatsForLocker(
-                                          selectedSeatsForLocker.filter((s) => s !== seat)
-                                        );
-                                      } else {
-                                        setSelectedSeatsForLocker([...selectedSeatsForLocker, seat]);
-                                      }
-                                    }}
-                                    className={`relative aspect-square w-6 sm:w-7 rounded-t-lg rounded-b-xs border text-[9px] font-bold font-mono transition-all flex items-center justify-center cursor-pointer select-none group overflow-hidden ${borderStyle} ${isBooked
-                                        ? "bg-stone-900/60 text-stone-600 cursor-not-allowed border-stone-800 opacity-60"
-                                        : isSelected
-                                          ? "bg-gradient-to-b from-[#F1D299] to-[#C5A059] text-stone-950 border-[#C5A059] shadow-[0_0_10px_rgba(197,160,89,0.3)]"
-                                          : isVIP
-                                            ? "bg-stone-900 border-[#C5A059] text-white hover:bg-[#C5A059]/20"
-                                            : isPREM
-                                              ? "bg-stone-900 border-[#C5A059]/40 text-[#F1D299] hover:bg-[#C5A059]/15"
-                                              : "bg-stone-950 text-stone-400 hover:bg-white/10 hover:border-stone-600"
-                                      }`}
-                                    title={`${seat} - ${isVIP ? "VIP (+50%)" : isPREM ? "Premium (+25%)" : "Standard"
-                                      }`}
-                                  >
-                                    {isBooked ? (
-                                      <Lock className="w-2.5 h-2.5 text-stone-600" />
-                                    ) : (
-                                      <span>{seat.replace(rowLetter, "")}</span>
-                                    )}
-                                    <div
-                                      className={`absolute bottom-0 w-full h-[2.5px] rounded-t-xs opacity-45 ${isSelected ? "bg-black/20" : "bg-white/10"
-                                        }`}
-                                    ></div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-
-                            {/* Row Label Right */}
-                            <div className="w-5 text-center text-[10px] font-bold text-stone-600 font-mono select-none">
-                              {rowLetter}
-                            </div>
-                          </div>
-                        ))}
+                                {/* Row Label Right */}
+                                <div className="w-5 text-center text-[10px] font-bold text-stone-600 font-mono select-none ml-1">
+                                  {rowLetter}
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
 

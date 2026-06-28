@@ -102,6 +102,7 @@ export interface Booking {
   bookingDate: string;
   coinsEarned?: number;
   coinsUsed?: number;
+  source?: "online" | "offline"; // "online" = user booking, "offline" = seat locker counter
 }
 
 export interface BankingDetails {

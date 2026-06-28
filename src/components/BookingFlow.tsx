@@ -268,6 +268,7 @@ export default function BookingFlow({
         isCancelled: false,
         coinsEarned,
         coinsUsed: useCoins ? maxCoinsToUse : 0,
+        source: "online" as const,
       });
 
       setConfirmedBookingId(bID);

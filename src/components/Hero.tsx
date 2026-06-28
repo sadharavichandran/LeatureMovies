@@ -1,5 +1,6 @@
 import { Search, Film, Globe, Star, ChevronRight, Clock, Tag } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Movie, Theatre } from "../types";
 
 const heroBg = "/src/assets/images/premium_cinema_bg_1780982549681.png";
@@ -35,6 +36,7 @@ export default function Hero({
 }: HeroProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (movies.length <= 1) return;
@@ -84,14 +86,14 @@ export default function Hero({
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 border border-[#C5A059]/25 rounded-full w-fit">
               <Star className="w-3.5 h-3.5 text-[#C5A059] fill-[#C5A059]" />
               <span className="text-[9px] font-bold uppercase tracking-[0.25em] gold-text">
-                Live Booking Engine
+                {t('hero.liveBookingEngine')}
               </span>
             </div>
 
             {/* Platform headline — guest homepage only */}
             <h1 className="text-4xl sm:text-5xl font-serif text-stone-100 leading-[1.1] tracking-tight">
-              Cinematic Excellence,{" "}
-              <span className="italic font-normal gold-text">Redefined.</span>
+              {t('hero.headline')}{" "}
+              <span className="italic font-normal gold-text">{t('hero.headlineItalic')}</span>
             </h1>
 
             {/* ── DYNAMIC MOVIE INFO PANEL (synced with poster) ── */}
@@ -105,7 +107,7 @@ export default function Hero({
 
                 {/* NOW SHOWING label */}
                 <span className="text-[9px] uppercase tracking-[0.25em] text-[#C5A059] font-bold font-mono pl-2">
-                  Now Showing
+                  {t('hero.nowShowing')}
                 </span>
 
                 {/* Movie Title (Bold) */}
@@ -134,7 +136,7 @@ export default function Hero({
 
                 {/* Short description */}
                 <p className="text-sm text-stone-400 leading-relaxed max-w-lg pl-2" style={{ transition: "all 0.4s ease" }}>
-                  {shortDesc(featuredMovie.description) || "A premium cinematic experience awaits. Reserve your seats now for an unforgettable screening at one of our luxury halls."}
+                  {shortDesc(featuredMovie.description) || t('hero.defaultDesc')}
                 </p>
 
                 {/* CTA Button */}
@@ -143,11 +145,11 @@ export default function Hero({
                     onClick={() => onSelectMovie(featuredMovie)}
                     className="flex items-center gap-2 bg-gradient-to-r from-[#C5A059] to-[#F1D299] text-[#050505] font-bold text-[11px] uppercase tracking-wider px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(197,160,89,0.25)] hover:shadow-[0_0_30px_rgba(197,160,89,0.4)] hover:opacity-90 transition-all duration-300 cursor-pointer"
                   >
-                    Reserve Seats
+                    {t('hero.reserveSeats')}
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                   <span className="text-[10px] text-stone-500 font-mono">
-                    Released: {featuredMovie.releaseDate.includes('T') ? featuredMovie.releaseDate.split('T')[0] : featuredMovie.releaseDate}
+                    {t('hero.released')} {featuredMovie.releaseDate.includes('T') ? featuredMovie.releaseDate.split('T')[0] : featuredMovie.releaseDate}
                   </span>
                 </div>
 
@@ -190,7 +192,7 @@ export default function Hero({
                     <Search className="w-5 h-5 text-stone-500 mr-3" />
                     <input
                       type="text"
-                      placeholder="Search over dynamic movies by title..."
+                      placeholder={t('hero.searchPlaceholder')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full bg-transparent border-none outline-none text-stone-100 text-sm placeholder-stone-500 tracking-wide focus:ring-0"
@@ -200,14 +202,14 @@ export default function Hero({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[9px] text-[#C5A059] uppercase tracking-[0.2em] font-mono font-bold pl-1">
-                        Language
+                        {t('hero.language')}
                       </label>
                       <select
                         value={selectedLanguage}
                         onChange={(e) => setSelectedLanguage(e.target.value)}
                         className="w-full px-3 py-2.5 bg-black/40 border border-white/10 focus:border-[#C5A059]/40 rounded-xl text-stone-200 text-xs tracking-wide transition-all outline-none cursor-pointer"
                       >
-                        <option value="" className="bg-stone-950 text-stone-200">All Languages</option>
+                        <option value="" className="bg-stone-950 text-stone-200">{t('hero.allLanguages')}</option>
                         {languages.map((lang) => (
                           <option key={lang} value={lang} className="bg-stone-950 text-stone-200">
                             {lang}
@@ -218,14 +220,14 @@ export default function Hero({
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[9px] text-[#C5A059] uppercase tracking-[0.2em] font-mono font-bold pl-1">
-                        Genre
+                        {t('hero.genre')}
                       </label>
                       <select
                         value={selectedGenre}
                         onChange={(e) => setSelectedGenre(e.target.value)}
                         className="w-full px-3 py-2.5 bg-black/40 border border-white/10 focus:border-[#C5A059]/40 rounded-xl text-stone-200 text-xs tracking-wide transition-all outline-none cursor-pointer"
                       >
-                        <option value="" className="bg-stone-950 text-stone-200">All Genres</option>
+                        <option value="" className="bg-stone-950 text-stone-200">{t('hero.allGenres')}</option>
                         {genres.map((g) => (
                           <option key={g} value={g} className="bg-stone-950 text-stone-200">
                             {g}
@@ -302,7 +304,7 @@ export default function Hero({
                       onClick={() => onSelectMovie(featuredMovie)}
                       className="text-[10px] uppercase tracking-wider bg-gradient-to-r from-[#C5A059] to-[#F1D299] text-[#050505] font-bold px-4 py-2 rounded-full transition-all cursor-pointer shadow-[0_0_15px_rgba(197,160,89,0.2)] hover:opacity-90 shrink-0"
                     >
-                      Book Now
+                      {t('hero.bookNow')}
                     </button>
                   </div>
                 </div>
@@ -312,9 +314,9 @@ export default function Hero({
                 <div className="p-4 bg-white/5 rounded-full text-[#C5A059] mb-4 border border-[#C5A059]/25 animate-pulse">
                   <Film className="w-8 h-8" />
                 </div>
-                <h4 className="text-stone-300 font-serif text-lg mb-2">Welcome to Leature Movies</h4>
+                <h4 className="text-stone-300 font-serif text-lg mb-2">{t('hero.welcomeTitle')}</h4>
                 <p className="text-stone-500 text-xs max-w-[200px] leading-relaxed">
-                  Scheduled dynamic screenings appear here live as added by the premium hotel curation team.
+                  {t('hero.welcomeSubtitle')}
                 </p>
               </div>
             )}

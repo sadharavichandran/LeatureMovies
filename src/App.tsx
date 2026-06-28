@@ -19,6 +19,7 @@ import RatingsReviewsModal from "./components/RatingsReviewsModal";
 import TheatreFeedbackModal from "./components/TheatreFeedbackModal";
 
 import WatchRoom from "./components/WatchRoom";
+import LeatureGuide from "./components/LeatureGuide";
 
 import { Film, Building2, MapPin, Search, Star, CalendarDays, X, HelpCircle, MessageSquare, PlaySquare, Users } from "lucide-react";
 
@@ -1144,6 +1145,25 @@ export default function App() {
           onClose={() => setReviewTheatre(null)}
         />
       )}
+
+      {/* Global AI Guide Component */}
+      <LeatureGuide 
+        currentUser={currentUser} 
+        currentView={currentView}
+        movies={movies}
+        theatres={theatres}
+        shows={activeShowsForUsers}
+        userBookings={currentUser ? bookings.filter(b => b.userId === currentUser.id) : []}
+        onInitiateBooking={handleInitiateBooking}
+        onNavigate={(view) => {
+          const targetView = view.toLowerCase().trim();
+          if ((targetView === 'user' || targetView === 'admin' || targetView === 'user-lostfound') && !currentUser) {
+            openAuthFlow('user', false);
+            return;
+          }
+          setCurrentView(targetView as any);
+        }}
+      />
     </div>
   );
 }
