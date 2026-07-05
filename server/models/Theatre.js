@@ -21,6 +21,7 @@ const TheatreSchema = new Schema(
     selectedLayoutSeats: { type: [String], default: [] },
     vipRows: { type: Number, default: 2 },
     premiumRows: { type: Number, default: 2 },
+    adminId: { type: String, default: null },
   },
   { timestamps: true }
 );
@@ -52,8 +53,9 @@ class Theatre {
     return doc;
   }
 
-  static async getAll() {
-    const docs = await TheatreModel.find().sort({ name: 1 }).lean();
+  static async getAll(adminId = null) {
+    const query = adminId ? { adminId } : {};
+    const docs = await TheatreModel.find(query).sort({ name: 1 }).lean();
     return docs.map((d) => {
       d.id = d._id;
       delete d._id;

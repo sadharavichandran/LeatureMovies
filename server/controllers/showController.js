@@ -5,6 +5,7 @@ const showController = {
   async create(req, res) {
     try {
       const showData = req.body;
+      showData.adminId = req.user.id;
       const show = await Show.create(showData);
       
       const io = req.app.get('io');
@@ -19,7 +20,12 @@ const showController = {
 
   async getAll(req, res) {
     try {
-      const shows = await Show.getAll();
+      let adminId = null;
+      const isSuperAdmin = req.user && req.user.role === 'superadmin';
+      if (req.user && req.user.role === 'admin') {
+        adminId = req.user.id;
+      }
+      const shows = await Show.getAll(adminId, isSuperAdmin);
       res.json({ shows });
     } catch (error) {
       console.error(error);
@@ -118,6 +124,14 @@ const showController = {
 
   async update(req, res) {
     try {
+      const existingShow = await Show.findById(req.params.id);
+      if (!existingShow) {
+        return res.status(404).json({ error: 'Show not found' });
+      }
+      if (req.user.role === 'admin' && existingShow.adminId !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       const show = await Show.update(req.params.id, req.body);
       if (!show) {
         return res.status(404).json({ error: 'Show not found' });
@@ -135,6 +149,14 @@ const showController = {
 
   async delete(req, res) {
     try {
+      const existingShow = await Show.findById(req.params.id);
+      if (!existingShow) {
+        return res.status(404).json({ error: 'Show not found' });
+      }
+      if (req.user.role === 'admin' && existingShow.adminId !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       await Show.delete(req.params.id);
       
       const io = req.app.get('io');

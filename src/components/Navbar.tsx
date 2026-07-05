@@ -60,7 +60,7 @@ export default function Navbar({
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8">
-            {!(currentUser && currentUser.role === 'admin') && (
+            {!(currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin')) && (
               <>
                 <button
                   onClick={() => onNavigate("home")}
@@ -79,7 +79,7 @@ export default function Navbar({
               </>
             )}
 
-            {currentUser && currentUser.role === "admin" && (
+            {currentUser && (currentUser.role === "admin" || currentUser.role === "superadmin") && (
               <button
                 onClick={() => onNavigate("admin")}
                 className={`text-xs font-semibold uppercase tracking-widest transition-all flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-[#C5A059]/40 text-amber-400 rounded-full animate-pulse ${currentView === "admin" ? "bg-amber-500/20" : ""}`}
@@ -197,7 +197,7 @@ export default function Navbar({
             ))}
           </div>
 
-          {!(currentUser && currentUser.role === 'admin') && (
+          {!(currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin')) && (
             <>
               <button
                 onClick={() => { onNavigate("home"); setMobileOpen(false); }}
@@ -216,7 +216,7 @@ export default function Navbar({
             </>
           )}
 
-          {currentUser && currentUser.role === "admin" && (
+          {currentUser && (currentUser.role === "admin" || currentUser.role === "superadmin") && (
             <button
               onClick={() => { onNavigate("admin"); setMobileOpen(false); }}
               className="text-left text-base font-bold py-2 border-b border-stone-900 text-amber-400 flex items-center gap-2"

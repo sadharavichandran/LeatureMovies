@@ -28,6 +28,7 @@ const ShowSchema = new Schema(
     vipRows: { type: Number, default: 2 },
     premiumRows: { type: Number, default: 2 },
     isCancelled: { type: Boolean, default: false },
+    adminId: { type: String, default: null },
   },
   { timestamps: true }
 );
@@ -66,8 +67,10 @@ class Show {
     return this._formatDoc(doc);
   }
 
-  static async getAll() {
-    const docs = await ShowModel.find({ isCancelled: false }).sort({ date: 1, time: 1 }).lean();
+  static async getAll(adminId = null, includeCancelled = false) {
+    const query = includeCancelled ? {} : { isCancelled: false };
+    if (adminId) query.adminId = adminId;
+    const docs = await ShowModel.find(query).sort({ date: 1, time: 1 }).lean();
     return docs.map((d) => this._formatDoc(d));
   }
 

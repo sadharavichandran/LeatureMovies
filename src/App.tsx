@@ -11,6 +11,7 @@ import AuthModal from "./components/AuthModal";
 import BookingFlow from "./components/BookingFlow";
 import UserPanel from "./components/UserPanel";
 import AdminPanel from "./components/AdminPanel";
+import SuperAdminPanel from "./components/SuperAdminPanel";
 import MoviesCatalog from "./components/MoviesCatalog";
 import ToastContainer, { ToastMessage, ToastType } from "./components/Toast";
 import ReportLostFoundModal from "./components/ReportLostFoundModal";
@@ -23,8 +24,8 @@ import WatchRoom from "./components/WatchRoom";
 import { Film, Building2, MapPin, Search, Star, CalendarDays, X, HelpCircle, MessageSquare, PlaySquare, Users } from "lucide-react";
 
 export default function App() {
-  // Navigation states: 'home' | 'admin' | 'user' | 'user-lostfound' | 'theatres' | 'watch-room'
-  const [currentView, setCurrentView] = useState<"home" | "admin" | "user" | "user-lostfound" | "theatres" | "watch-room">("home");
+  // Navigation states: 'home' | 'admin' | 'superadmin' | 'user' | 'user-lostfound' | 'theatres' | 'watch-room'
+  const [currentView, setCurrentView] = useState<"home" | "admin" | "superadmin" | "user" | "user-lostfound" | "theatres" | "watch-room">("home");
   const [watchRoomId, setWatchRoomId] = useState<string | null>(null);
   const [selectedTheatreForMap, setSelectedTheatreForMap] = useState<Theatre | null>(null);
   const [reportingTheatre, setReportingTheatre] = useState<Theatre | null>(null);
@@ -143,7 +144,10 @@ export default function App() {
     };
 
     fetchData();
+  }, [currentUser?.id]);
 
+  // --- SOCKET SETUP ---
+  useEffect(() => {
     // Connect socket for real-time updates
     socketService.connect();
 
@@ -666,9 +670,13 @@ export default function App() {
         onLogout={handleSignOut}
         onOpenAuth={openAuthFlow}
         onNavigate={(view) => {
-          if (!currentUser && (view === "admin" || view === "user" || view === "watch-room")) {
+          if (!currentUser && (view === "admin" || view === "superadmin" || view === "user" || view === "watch-room")) {
             showToast("Required logging session to view.", "info");
             openAuthFlow("user", false);
+            return;
+          }
+          if (currentUser?.role === 'superadmin' && view === 'admin') {
+            setCurrentView("superadmin");
             return;
           }
           setCurrentView(view);
@@ -677,7 +685,7 @@ export default function App() {
       />
 
       {/* WATCH ROOM CREATE/JOIN ACTIONS BAR */}
-      {currentUser && currentView !== "watch-room" && currentView !== "admin" && (
+      {currentUser && currentView !== "watch-room" && currentView !== "admin" && currentView !== "superadmin" && (
         <div className="bg-[#C5A059]/10 border-b border-[#C5A059]/20 py-2 px-4 flex justify-center gap-4 animate-fadeIn">
           <button
             onClick={async () => {
@@ -756,6 +764,11 @@ export default function App() {
           lostFoundItems={lostFoundItems}
           onUpdateLostFoundStatus={handleUpdateLostFoundStatus}
         />
+      )}
+
+      {/* 1.5 SUPER ADMIN PANEL VIEW */}
+      {currentView === "superadmin" && currentUser?.role === "superadmin" && (
+        <SuperAdminPanel theatres={theatres} />
       )}
 
 
@@ -1028,7 +1041,9 @@ export default function App() {
         onShowToast={showToast}
         onAuthSuccess={(profileObj) => {
           setCurrentUser(profileObj);
-          if (profileObj.role === "admin") {
+          if (profileObj.role === "superadmin") {
+            setCurrentView("superadmin");
+          } else if (profileObj.role === "admin") {
             setCurrentView("admin");
           } else if (pendingBookingMovie) {
             setActiveMovieForBooking(pendingBookingMovie);

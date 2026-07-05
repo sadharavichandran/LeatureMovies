@@ -21,7 +21,8 @@ const MovieSchema = new Schema(
       type: Map,
       of: Number,
       default: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 }
-    }
+    },
+    adminId: { type: String, default: null }
   },
   { timestamps: true }
 );
@@ -62,8 +63,9 @@ class Movie {
     return this._formatDoc(doc);
   }
 
-  static async getAll() {
-    const docs = await MovieModel.find().sort({ createdAt: -1 }).lean();
+  static async getAll(adminId = null) {
+    const query = adminId ? { adminId } : {};
+    const docs = await MovieModel.find(query).sort({ createdAt: -1 }).lean();
     return docs.map((d) => this._formatDoc(d));
   }
 

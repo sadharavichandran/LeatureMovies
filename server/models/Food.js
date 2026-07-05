@@ -11,6 +11,7 @@ const FoodSchema = new Schema(
     imageUrl: { type: String, required: true },
     category: { type: String, default: 'Snacks' },
     theatreId: { type: String, default: null }, // null means available at all theatres
+    adminId: { type: String, default: null },
   },
   { timestamps: true }
 );
@@ -42,8 +43,9 @@ class Food {
     return doc;
   }
 
-  static async getAll() {
-    const docs = await FoodModel.find().sort({ name: 1 }).lean();
+  static async getAll(adminId = null) {
+    const query = adminId ? { adminId } : {};
+    const docs = await FoodModel.find(query).sort({ name: 1 }).lean();
     return docs.map((d) => {
       d.id = d._id;
       delete d._id;
@@ -51,11 +53,15 @@ class Food {
     });
   }
 
-  static async getByTheatre(theatreId) {
+  static async getByTheatre(theatreId, adminId = null) {
     // Return foods that belong to this theatre OR have no theatreId (global foods)
-    const docs = await FoodModel.find({
+    const query = {
       $or: [{ theatreId }, { theatreId: null }, { theatreId: { $exists: false } }]
-    }).sort({ name: 1 }).lean();
+    };
+    if (adminId) {
+      query.adminId = adminId;
+    }
+    const docs = await FoodModel.find(query).sort({ name: 1 }).lean();
     return docs.map((d) => {
       d.id = d._id;
       delete d._id;

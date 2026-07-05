@@ -34,6 +34,7 @@ const movieController = {
         }
         movieData.duration = parsed;
       }
+      movieData.adminId = req.user.id;
       const movie = await Movie.create(movieData);
       res.json({ message: 'Movie created successfully', movie });
     } catch (error) {
@@ -44,7 +45,11 @@ const movieController = {
 
   async getAll(req, res) {
     try {
-      const movies = await Movie.getAll();
+      let adminId = null;
+      if (req.user && req.user.role === 'admin') {
+        adminId = req.user.id;
+      }
+      const movies = await Movie.getAll(adminId);
       res.json({ movies });
     } catch (error) {
       console.error(error);
@@ -98,6 +103,14 @@ const movieController = {
         updateData.duration = parsed;
       }
 
+      const existingMovie = await Movie.findById(req.params.id);
+      if (!existingMovie) {
+        return res.status(404).json({ error: 'Movie not found' });
+      }
+      if (req.user.role === 'admin' && existingMovie.adminId !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       const movie = await Movie.update(req.params.id, updateData);
       if (!movie) {
         return res.status(404).json({ error: 'Movie not found' });
@@ -116,6 +129,14 @@ const movieController = {
         console.error('[DEBUG] Invalid movie id. Aborting delete.');
         return res.status(400).json({ error: 'Invalid movie id. Aborting delete.' });
       }
+      const existingMovie = await Movie.findById(req.params.id);
+      if (!existingMovie) {
+        return res.status(404).json({ error: 'Movie not found' });
+      }
+      if (req.user.role === 'admin' && existingMovie.adminId !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       await Movie.delete(req.params.id);
       res.json({ message: 'Movie deleted successfully' });
     } catch (error) {

@@ -1,5 +1,6 @@
 import { Calendar, Building2, MapPin, Ticket, ShieldAlert, ArrowLeft, Download, RefreshCw, Coins, UtensilsCrossed, HelpCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { useTranslation } from "react-i18next";
 import { Booking, Show, Movie, UserProfile, FoodOrderItem } from "../types";
 import { formatCurrency, generateVisualQRCodeSVG } from "../utils";
 
@@ -25,6 +26,7 @@ export default function UserPanel({
   waitlistEntries = [],
   onLeaveWaitlist,
 }: UserPanelProps) {
+  const { t } = useTranslation();
   const isCancellable = (booking: Booking) => {
     return !booking.isCancelled;
   };
@@ -89,10 +91,10 @@ export default function UserPanel({
             </button>
             <div>
               <h1 className="text-3xl font-serif font-bold text-stone-100 tracking-wide">
-                My Booking Corridor
+                {t('user.bookingCorridorTitle')}
               </h1>
               <p className="text-stone-400 text-xs mt-1">
-                Check active cinema boarding passes or request cancel allocations.
+                {t('user.bookingCorridorSubtitle')}
               </p>
             </div>
           </div>
@@ -108,14 +110,14 @@ export default function UserPanel({
               className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-semibold rounded-xl tracking-wide flex items-center gap-2 transition-colors"
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              Lost & Found Status
+              {t('user.lostFoundStatus')}
             </button>
             <button
               onClick={onNavigateHome}
               className="px-4 py-2 text-stone-400 hover:text-stone-200 border border-white/5 bg-white/3 hover:bg-white/10 text-xs font-semibold rounded-xl tracking-wide flex items-center gap-2 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Back to Catalog
+              {t('user.backToCatalog')}
             </button>
           </div>
         </div>
@@ -175,7 +177,7 @@ export default function UserPanel({
                 <div className="flex-1 flex flex-col justify-between text-center md:text-left gap-4">
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[9px] font-mono tracking-widest text-[#C5A059] font-bold block uppercase">
-                      Reservation Reference ID: {displayId}
+                      {t('user.reservationReference')}: {displayId}
                     </span>
                     <h2 className="text-xl sm:text-2xl font-bold font-serif text-stone-100 group-hover:text-[#F1D299] transition-all">
                       {booking.movieTitle}
@@ -189,32 +191,32 @@ export default function UserPanel({
                   {/* Scheduled Slot Details */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-black/60 p-4 border border-white/5 rounded-2xl text-xs font-mono">
                     <div>
-                      <span className="text-stone-500 block text-[10px]">Show Date</span>
+                      <span className="text-stone-500 block text-[10px]">{t('user.showDate')}</span>
                       <span className="text-stone-300 font-semibold">{booking.showDate.split('T')[0]}</span>
                     </div>
                     <div>
-                      <span className="text-stone-500 block text-[10px]">Show Time</span>
+                      <span className="text-stone-500 block text-[10px]">{t('user.showTime')}</span>
                       <span className="text-stone-300 font-semibold">{booking.showTime}</span>
                     </div>
                     <div>
-                      <span className="text-stone-500 block text-[10px]">Seating Layout</span>
+                      <span className="text-stone-500 block text-[10px]">{t('user.seatingLayout')}</span>
                       <span className="text-[#C5A059] font-bold block truncate" title={seatsList}>
                         {seatsList}
                       </span>
                     </div>
                     <div>
-                      <span className="text-stone-500 block text-[10px]">Sells Charge</span>
+                      <span className="text-stone-500 block text-[10px]">{t('user.salesCharge')}</span>
                       <span className="text-stone-300 font-bold">
                         {formatCurrency(booking.totalAmount)}
                       </span>
                     </div>
                     <div className="col-span-2 sm:col-span-4 pt-2 border-t border-stone-800/60 flex justify-between mt-1">
                       <div>
-                        <span className="text-stone-500 text-[10px] block">Booking Date</span>
+                        <span className="text-stone-500 text-[10px] block">{t('user.bookingDate')}</span>
                         <span className="text-stone-400 font-bold">{bookingDateStr}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-stone-500 text-[10px] block">Booking Time</span>
+                        <span className="text-stone-500 text-[10px] block">{t('user.bookingTime')}</span>
                         <span className="text-stone-400 font-bold">{bookingTimeStr}</span>
                       </div>
                     </div>
@@ -224,7 +226,7 @@ export default function UserPanel({
                     <div className="bg-[#C5A059]/5 border border-[#C5A059]/20 rounded-xl p-3 text-xs font-mono">
                       <div className="flex items-center gap-1.5 text-[#C5A059] font-bold mb-1.5 uppercase tracking-wider text-[10px]">
                         <UtensilsCrossed className="w-3.5 h-3.5" />
-                        Food & Beverages Pre-Order
+                        {t('user.foodPreOrder')}
                       </div>
                       <div className="text-stone-300 pl-5">
                         {booking.foodOrderItems!.map((item) => (
@@ -233,8 +235,8 @@ export default function UserPanel({
                           </div>
                         ))}
                         <div className="mt-1 pt-1 border-t border-[#C5A059]/10 text-[#C5A059]/80 text-[10px]">
-                          {booking.foodDeliveryOption === 'seat' ? '🚶 Will be delivered to your seat' : '📦 Collect at food counter'}
-                          {booking.foodDeliveryFee ? ` (+${formatCurrency(booking.foodDeliveryFee)} delivery fee)` : ''}
+                          {booking.foodDeliveryOption === 'seat' ? t('user.foodDeliverySeat') : t('user.foodCollectCounter')}
+                          {booking.foodDeliveryFee ? ` (+${formatCurrency(booking.foodDeliveryFee)} ${t('user.deliveryFee')})` : ''}
                         </div>
                       </div>
                     </div>
@@ -248,7 +250,7 @@ export default function UserPanel({
                         className="px-4 py-2 bg-white/5 hover:bg-white/10 hover:text-[#C5A059] border border-white/10 text-stone-300 text-xs font-bold rounded-xl tracking-wide flex items-center gap-1.5 cursor-pointer transition-all shadow"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        Download PDF Ticket
+                        {t('user.downloadTicket')}
                       </button>
                     )}
 
@@ -257,7 +259,7 @@ export default function UserPanel({
                         onClick={() => {
                           if (
                             confirm(
-                              `Cancel this booking permanently? Sells totals will register refunds, and seats ${seatsList} will trigger instant release.`
+                              t('user.cancelBookingPrompt', { seats: seatsList })
                             )
                           ) {
                             onCancelBooking(booking.id, booking.showId, booking.seatNumbers);
@@ -266,13 +268,13 @@ export default function UserPanel({
                         className="px-3.5 py-2 hover:bg-red-500/10 text-red-400 hover:text-red-500 border border-red-500/20 text-xs font-bold rounded-xl tracking-wide flex items-center gap-1.5 cursor-pointer transition-all"
                       >
                         <ShieldAlert className="w-3.5 h-3.5" />
-                        Request Cancellation
+                        {t('user.requestCancellation')}
                       </button>
                     )}
 
                     {booking.isCancelled && (
                       <span className="text-xs font-mono font-bold text-red-500 uppercase tracking-widest pl-1">
-                        ● Ticket Cancelled - Refund Processed
+                        ● {t('user.ticketCancelledRefund')}
                       </span>
                     )}
                   </div>
@@ -292,7 +294,7 @@ export default function UserPanel({
                         />
                       </div>
                       <span className="text-[8px] font-mono font-bold text-[#C5A059] tracking-widest mt-1">
-                        SCAN COUPE
+                        {t('user.scanCoupon')}
                       </span>
                     </>
                   ) : (
@@ -309,15 +311,15 @@ export default function UserPanel({
           {bookings.length === 0 && (
             <div className="border border-[#C5A059]/20 border-dashed rounded-3xl py-20 text-center text-stone-500 bg-white/2">
               <Ticket className="w-10 h-10 mx-auto text-stone-700 mb-3 animate-pulse" />
-              <h3 className="text-stone-300 font-semibold mb-1">Your Booking corridor is empty</h3>
+              <h3 className="text-stone-300 font-semibold mb-1">{t('user.emptyCorridorTitle')}</h3>
               <p className="text-stone-500 text-xs max-w-sm mx-auto leading-relaxed mb-4">
-                You haven't scheduled any cinematique entries yet. Select any movie inside our catalog to book seats.
+                {t('user.emptyCorridorDescription')}
               </p>
               <button
                 onClick={onNavigateHome}
                 className="px-6 py-2.5 bg-gradient-to-r from-[#C5A059] to-[#F1D299] text-[#050505] text-xs font-bold uppercase tracking-wider rounded-lg shadow-xl cursor-pointer hover:opacity-90 transition-all font-sans"
               >
-                Go Browse Movies
+                {t('user.goBrowseMovies')}
               </button>
             </div>
           )}
@@ -327,7 +329,7 @@ export default function UserPanel({
         {waitlistEntries && waitlistEntries.length > 0 && (
           <div className="flex flex-col gap-6 mt-8">
             <h2 className="text-2xl font-serif font-bold text-stone-100 tracking-wide border-b border-white/5 pb-4">
-              My Active Waitlists
+              {t('user.activeWaitlists')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {waitlistEntries.map((entry) => (
@@ -342,22 +344,22 @@ export default function UserPanel({
                     </span>
                   </div>
                   <div className="text-xs font-mono bg-black/40 p-3 rounded-lg border border-white/5 flex flex-col gap-1 text-stone-400">
-                    <div>Show Time: <span className="text-stone-300 font-bold">{entry.showTime}</span></div>
-                    <div>Waitlist Seats: <span className="text-[#C5A059] font-bold">{entry.seatsRequested?.join(", ") || "Any"}</span></div>
+                    <div>{t('user.showTimeLabel')}: <span className="text-stone-300 font-bold">{entry.showTime}</span></div>
+                    <div>{t('user.waitlistSeats')}: <span className="text-[#C5A059] font-bold">{entry.seatsRequested?.join(", ") || t('user.any')}</span></div>
                     {entry.createdAt && (
-                      <div className="text-[10px] text-stone-500 mt-1">Joined Waitlist: {new Date(entry.createdAt).toLocaleDateString()}</div>
+                      <div className="text-[10px] text-stone-500 mt-1">{t('user.joinedWaitlist')}: {new Date(entry.createdAt).toLocaleDateString()}</div>
                     )}
                   </div>
                   <div className="flex justify-end mt-1">
                     <button
                       onClick={() => {
-                        if (confirm("Leave this show waitlist queue?")) {
+                        if (confirm(t('user.leaveWaitlistConfirm'))) {
                           onLeaveWaitlist && onLeaveWaitlist(entry.id);
                         }
                       }}
                       className="px-3 py-1.5 text-[9px] uppercase font-bold tracking-wider hover:bg-red-500/10 text-red-400 hover:text-red-500 border border-red-500/20 rounded-lg transition-all cursor-pointer"
                     >
-                      Leave Queue
+                      {t('user.leaveQueue')}
                     </button>
                   </div>
                 </div>

@@ -1,10 +1,10 @@
 import express from 'express';
 import theatreController from '../controllers/theatreController.js';
-import { authMiddleware, adminMiddleware } from '../middleware/auth.js';
+import { authMiddleware, adminMiddleware, optionalAuthMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', theatreController.getAll);
+router.get('/', optionalAuthMiddleware, theatreController.getAll);
 router.get('/:id', theatreController.getById);
 router.post('/', authMiddleware, adminMiddleware, theatreController.create);
 router.put('/:id', authMiddleware, adminMiddleware, theatreController.update);

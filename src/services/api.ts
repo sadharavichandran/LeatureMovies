@@ -80,6 +80,7 @@ export const authService = {
     }),
 
   getProfile: () => apiCall('/auth/profile'),
+  getAllUsers: () => apiCall('/auth/users'),
 
   logout: () => {
     setToken(null);

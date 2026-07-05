@@ -27,6 +27,7 @@ import {
   RefreshCw,
   ListOrdered,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Movie, Theatre, Show, Booking, BankingDetails, Food } from "../types";
 import { waitingQueueService } from "../services/api";
 import { generateRandomId, formatCurrency, formatTime12h } from "../utils";
@@ -86,6 +87,7 @@ export default function AdminPanel({
   lostFoundItems = [],
   onUpdateLostFoundStatus,
 }: AdminPanelProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<
     "analytics" | "movies" | "theatres" | "shows" | "bookings" | "banking" | "food" | "seatLocker" | "lostFound"
   >("analytics");
@@ -265,18 +267,18 @@ export default function AdminPanel({
       {/* Side Tabs Rail */}
       <div className="w-full md:w-64 bg-black/40 border-b md:border-b-0 md:border-r border-white/5 p-4 shrink-0 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-x-visible no-scrollbar">
         <h2 className="hidden md:block font-serif font-bold text-[#C5A059] tracking-widest text-xs uppercase px-3 pt-4 pb-6">
-          ADMIN CONTROL
+          {t('admin.control')}
         </h2>
         {[
-          { id: "analytics", label: "Analytics Hub", icon: IndianRupee },
-          { id: "movies", label: "Movie Catalog", icon: Film },
-          { id: "theatres", label: "Theatre Locations", icon: Building2 },
-          { id: "shows", label: "Show Scheduler", icon: CalendarDays },
-          { id: "food", label: "Food Counter", icon: UtensilsCrossed },
-          { id: "bookings", label: "Booking Logs", icon: Receipt },
-          { id: "lostFound", label: "Lost & Found", icon: HelpCircle },
-          { id: "banking", label: "Banking Gateway", icon: Landmark },
-          { id: "seatLocker", label: "Seat Locker", icon: Lock },
+          { id: "analytics", label: t('admin.analyticsHub'), icon: IndianRupee },
+          { id: "movies", label: t('admin.movies'), icon: Film },
+          { id: "theatres", label: t('admin.theatres'), icon: Building2 },
+          { id: "shows", label: t('admin.shows'), icon: CalendarDays },
+          { id: "food", label: t('admin.foodCounter'), icon: UtensilsCrossed },
+          { id: "bookings", label: t('admin.bookingLogs'), icon: Receipt },
+          { id: "lostFound", label: t('admin.lostAndFound'), icon: HelpCircle },
+          { id: "banking", label: t('admin.bankingGateway'), icon: Landmark },
+          { id: "seatLocker", label: t('admin.seatLocker'), icon: Lock },
         ].map((tab) => {
 
           const Icon = tab.icon;
@@ -303,10 +305,10 @@ export default function AdminPanel({
           <div className="flex flex-col gap-8 animate-fadeIn">
             <div>
               <h2 className="text-3xl font-serif font-bold tracking-tight text-stone-100">
-                Dashboard Metrics
+                {t('admin.dashboardMetrics')}
               </h2>
               <p className="text-stone-400 text-xs mt-1">
-                Real-time performance analytics of ticket sales, cinema theaters and showtimes.
+                {t('admin.analyticsDesc')}
               </p>
             </div>
 
@@ -386,26 +388,26 @@ export default function AdminPanel({
 
             {/* Quick action list for first-step admins */}
             <div className="bg-stone-900/20 border border-stone-800 p-6 rounded-2xl">
-              <h3 className="font-sans font-bold text-stone-200 mb-2">Getting Started Guide</h3>
+              <h3 className="font-sans font-bold text-stone-200 mb-2">{t('admin.gettingStartedGuide')}</h3>
               <p className="text-stone-400 text-sm leading-relaxed mb-4">
-                To accept user ticket purchases, please complete the following steps in sequence:
+                {t('admin.stepsIntro')}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-mono">
                 <div className="p-3 bg-stone-950/60 border border-stone-800 rounded-xl flex items-center gap-3">
                   <span className="text-amber-500 font-bold">1.</span>
-                  <span>Register Cinema Houses/Theatres</span>
+                  <span>{t('admin.stepRegisterTheatres')}</span>
                 </div>
                 <div className="p-3 bg-stone-950/60 border border-stone-800 rounded-xl flex items-center gap-3">
                   <span className="text-amber-500 font-bold">2.</span>
-                  <span>Upload Fresh Movie Titles</span>
+                  <span>{t('admin.stepUploadMovies')}</span>
                 </div>
                 <div className="p-3 bg-stone-950/60 border border-stone-800 rounded-xl flex items-center gap-3">
                   <span className="text-amber-500 font-bold">3.</span>
-                  <span>Schedule Shows</span>
+                  <span>{t('admin.stepScheduleShows')}</span>
                 </div>
                 <div className="p-3 bg-stone-950/60 border border-stone-800 rounded-xl flex items-center gap-3">
                   <span className="text-amber-500 font-bold">4.</span>
-                  <span>Confirm Banking Details</span>
+                  <span>{t('admin.stepConfirmBanking')}</span>
                 </div>
               </div>
             </div>
@@ -418,10 +420,10 @@ export default function AdminPanel({
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
                 <h2 className="text-3xl font-sans font-bold tracking-tight text-stone-100">
-                  Movie Management
+                  {t('admin.movies')}
                 </h2>
                 <p className="text-stone-400 text-sm mt-1">
-                  Configure titles, high-resolution posters, genres, language variations and trailers.
+                  {t('admin.movieManagementDesc')}
                 </p>
               </div>
               {!isEditingMovie && (
@@ -445,7 +447,7 @@ export default function AdminPanel({
                   className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl text-sm flex items-center gap-2 transition-transform hover:scale-103 cursor-pointer shadow-lg"
                 >
                   <Plus className="w-4 h-4" />
-                  Add New Movie
+                  {t('admin.addNewMovie')}
                 </button>
               )}
             </div>
@@ -456,7 +458,7 @@ export default function AdminPanel({
                 onSubmit={async (e) => {
                   e.preventDefault();
                   if (!movieForm.title || !movieForm.posterUrl || !movieForm.description) {
-                    alert("Please provide the title, poster image, and outline description.");
+                    alert(t('admin.movieFormIncomplete'));
                     return;
                   }
                   if (movieForm.id) {
@@ -471,7 +473,7 @@ export default function AdminPanel({
                 className="p-6 bg-stone-900/50 border border-stone-800 rounded-2xl flex flex-col gap-4 relative"
               >
                 <h3 className="text-lg font-bold text-stone-200">
-                  {movieForm.id ? "Update Movie Record" : "Add Fresh Movie Entry"}
+                  {movieForm.id ? t('admin.updateMovieRecord') : t('admin.addFreshMovieEntry')}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -490,7 +492,7 @@ export default function AdminPanel({
                         onChange={(e) => handleBase64Upload(e, (url) => setMovieForm({ ...movieForm, posterUrl: url }))}
                         className="text-xs text-stone-300 bg-stone-950 p-2 rounded-xl border border-stone-800"
                       />
-                      <span className="text-[10px] text-stone-500 italic">OR input URL address directly:</span>
+                      <span className="text-[10px] text-stone-500 italic">{t('admin.orInputUrl')}</span>
                       <input
                         type="text"
                         placeholder="https://images.unsplash.com/..."
@@ -505,7 +507,7 @@ export default function AdminPanel({
                   <div className="flex flex-col gap-4 md:col-span-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs text-stone-400">Movie Name/Title</label>
+                        <label className="text-xs text-stone-400">{t('admin.movieNameTitle')}</label>
                         <input
                           type="text"
                           required
@@ -515,7 +517,7 @@ export default function AdminPanel({
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs text-stone-400">Duration (e.g. 142 mins)</label>
+                        <label className="text-xs text-stone-400">{t('admin.durationExample')}</label>
                         <input
                           type="text"
                           required
@@ -528,7 +530,7 @@ export default function AdminPanel({
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs text-stone-400">Language</label>
+                        <label className="text-xs text-stone-400">{t('admin.languageLabel')}</label>
                         <select
                           value={movieForm.language}
                           onChange={(e) => setMovieForm({ ...movieForm, language: e.target.value })}
@@ -544,7 +546,7 @@ export default function AdminPanel({
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs text-stone-400">Genre</label>
+                        <label className="text-xs text-stone-400">{t('admin.genreLabel')}</label>
                         <select
                           value={movieForm.genre}
                           onChange={(e) => setMovieForm({ ...movieForm, genre: e.target.value })}
@@ -561,7 +563,7 @@ export default function AdminPanel({
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs text-stone-400">Release Date</label>
+                        <label className="text-xs text-stone-400">{t('admin.releaseDateLabel')}</label>
                         <input
                           type="datetime-local"
                           value={movieForm.releaseDate}
@@ -574,7 +576,7 @@ export default function AdminPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-stone-400">Trailer (Upload Video or Provide YouTube Link)</label>
+                  <label className="text-xs text-stone-400">{t('admin.trailerLabel')}</label>
                   <input
                     type="file"
                     accept="video/*"
@@ -593,7 +595,7 @@ export default function AdminPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-stone-400">Movie Description / Plot Summary</label>
+                  <label className="text-xs text-stone-400">{t('admin.movieDescriptionLabel')}</label>
                   <textarea
                     rows={3}
                     required
@@ -609,13 +611,13 @@ export default function AdminPanel({
                     onClick={() => setIsEditingMovie(false)}
                     className="px-4 py-2 bg-transparent text-stone-300 hover:bg-stone-800 rounded-xl text-sm"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
                     className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl text-sm"
                   >
-                    Save Changes
+                    {t('common.save')}
                   </button>
                 </div>
               </form>
@@ -699,7 +701,7 @@ export default function AdminPanel({
               {movies.length === 0 && (
                 <div className="col-span-full border border-stone-830 border-dashed rounded-2xl py-16 text-center text-stone-500">
                   <Film className="w-8 h-8 mx-auto text-stone-600 mb-2" />
-                  <span>No dynamic movies loaded. Add one to show on client browser.</span>
+                  <span>{t('admin.noDynamicMovies')}</span>
                 </div>
               )}
             </div>
@@ -746,7 +748,7 @@ export default function AdminPanel({
                   className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl text-sm flex items-center gap-2 transition-transform hover:scale-103 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  Register New Theatre
+                  {t('admin.registerNewTheatre')}
                 </button>
               )}
             </div>
@@ -770,11 +772,11 @@ export default function AdminPanel({
                 className="p-6 bg-stone-900/50 border border-stone-800 rounded-2xl flex flex-col gap-4 max-w-3xl"
               >
                 <h3 className="text-lg font-bold text-stone-200">
-                  {theatreForm.id ? "Update Location Info" : "Register Location Entity"}
+                  {theatreForm.id ? t('admin.updateLocationInfo') : t('admin.registerLocationEntity')}
                 </h3>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm text-stone-400">Theatre Name (e.g. Sunset IMAX)</label>
+                  <label className="text-sm text-stone-400">{t('admin.theatreNameLabel')}</label>
                   <input
                     type="text"
                     required
@@ -786,7 +788,7 @@ export default function AdminPanel({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm text-stone-400">Location address</label>
+                    <label className="text-sm text-stone-400">{t('admin.locationAddressLabel')}</label>
                     <input
                       type="text"
                       required
@@ -796,7 +798,7 @@ export default function AdminPanel({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm text-stone-400">Available Screens (1 - 20)</label>
+                    <label className="text-sm text-stone-400">{t('admin.availableScreensLabel')}</label>
                     <input
                       type="number"
                       required
@@ -815,8 +817,8 @@ export default function AdminPanel({
                 <div className="flex flex-col gap-4 pt-2 border-t border-stone-800/50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-bold text-stone-200">Parking Facility</h4>
-                      <p className="text-xs text-stone-500 mt-0.5">Enable to configure parking layout and pricing</p>
+                      <h4 className="text-sm font-bold text-stone-200">{t('admin.parkingFacility')}</h4>
+                      <p className="text-xs text-stone-500 mt-0.5">{t('admin.parkingDesc')}</p>
                     </div>
                     <button
                       type="button"
@@ -837,7 +839,7 @@ export default function AdminPanel({
                     <div className="flex flex-col gap-4 p-4 bg-stone-950/60 border border-amber-500/10 rounded-xl animate-fadeIn">
                       {/* 2-Wheeler Zone */}
                       <div className="flex flex-col gap-2">
-                        <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest">2-Wheeler Zone</span>
+                        <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest">{t('admin.twoWheelerZone')}</span>
                         <div className="grid grid-cols-3 gap-3">
                           <div className="flex flex-col gap-1">
                             <label className="text-xs text-stone-400">Rows</label>
@@ -874,7 +876,7 @@ export default function AdminPanel({
 
                       {/* 4-Wheeler Zone */}
                       <div className="flex flex-col gap-2 pt-2 border-t border-stone-800/40">
-                        <span className="text-xs font-semibold text-stone-300 uppercase tracking-widest">4-Wheeler Zone</span>
+                        <span className="text-xs font-semibold text-stone-300 uppercase tracking-widest">{t('admin.fourWheelerZone')}</span>
                         <div className="grid grid-cols-3 gap-3">
                           <div className="flex flex-col gap-1">
                             <label className="text-xs text-stone-400">Rows</label>
@@ -977,11 +979,11 @@ export default function AdminPanel({
                             setTheatreForm({ ...theatreForm, selectedLayoutSeats: all });
                           }}
                           className="px-3 py-1 text-[10px] font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg hover:bg-amber-500/30 cursor-pointer"
-                        >Select All</button>
+                        >{t('admin.selectAll')}</button>
                         <button type="button"
                           onClick={() => setTheatreForm({ ...theatreForm, selectedLayoutSeats: [] })}
                           className="px-3 py-1 text-[10px] font-bold uppercase bg-stone-800 text-stone-400 border border-stone-700 rounded-lg hover:bg-stone-700 cursor-pointer"
-                        >Clear All</button>
+                        >{t('admin.clearAll')}</button>
                       </div>
                     </div>
                     <p className="text-[10px] text-stone-600 mb-2">Click seats to toggle on/off. Leave inactive to create aisles or gaps.</p>
@@ -1042,13 +1044,13 @@ export default function AdminPanel({
                     onClick={() => setIsEditingTheatre(false)}
                     className="px-4 py-2 bg-transparent text-stone-300 hover:bg-stone-800 rounded-xl text-sm"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
                     className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl text-sm"
                   >
-                    Save Theatre
+                    {t('admin.saveTheatre')}
                   </button>
                 </div>
               </form>
@@ -1122,7 +1124,7 @@ export default function AdminPanel({
               {theatres.length === 0 && (
                 <div className="col-span-full border border-stone-835 border-dashed rounded-2xl py-16 text-center text-stone-500">
                   <Building2 className="w-8 h-8 mx-auto text-stone-600 mb-2" />
-                  <span>No registered location halls yet. Add one above to load schedules.</span>
+                  <span>{t('admin.noRegisteredLocations')}</span>
                 </div>
               )}
             </div>
@@ -1135,10 +1137,10 @@ export default function AdminPanel({
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
               <div>
                 <h2 className="text-3xl font-sans font-bold tracking-tight text-stone-100">
-                  Show Scheduler
+                  {t('admin.shows')}
                 </h2>
                 <p className="text-stone-400 text-sm mt-1">
-                  Schedule time-slots, screen rooms, ticket base pricing, and construct seat inventories.
+                  {t('admin.showSchedulerDesc')}
                 </p>
               </div>
               {!isEditingShow && (
@@ -1146,9 +1148,7 @@ export default function AdminPanel({
                   type="button"
                   onClick={() => {
                     if (movies.length === 0 || theatres.length === 0) {
-                      alert(
-                        "You must first seed at least 1 movie and 1 theatre location to schedule a show."
-                      );
+                      alert(t('admin.scheduleShowPrerequisite'));
                       return;
                     }
                     setShowForm({
@@ -1168,7 +1168,7 @@ export default function AdminPanel({
                   className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl text-sm flex items-center gap-2 transition-transform hover:scale-103 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  Create Show Slot
+                  {t('admin.createShowSlot')}
                 </button>
               )}
             </div>
@@ -1301,7 +1301,7 @@ export default function AdminPanel({
               >
                 <div className="flex justify-between items-center">
                   <h3 className="text-xl font-bold text-amber-400">
-                    {showForm.id ? "Edit Scheduled Slot" : "Create Dynamic Show Slot"}
+                    {showForm.id ? t('admin.editScheduledSlot') : t('admin.createDynamicShowSlot')}
                   </h3>
                   <span className="text-[10px] text-stone-500 font-mono tracking-wider">
                     Seat Configurator Active
@@ -1342,7 +1342,7 @@ export default function AdminPanel({
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                   <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <label className="text-xs text-stone-300">Screen ID</label>
+                    <label className="text-xs text-stone-300">{t('admin.screenIdLabel')}</label>
                     <input
                       type="number"
                       required
@@ -1357,7 +1357,7 @@ export default function AdminPanel({
 
                   <div className="flex flex-col gap-1.5 sm:col-span-4">
                     <label className="text-xs text-stone-300 flex justify-between items-center">
-                      <span>Show Date(s)</span>
+                      <span>{t('admin.showDatesLabel')}</span>
                       <button type="button" onClick={() => setShowForm({ ...showForm, dates: [...showForm.dates, ""] })} className="bg-[#C5A059] text-black w-4 h-4 rounded-full flex items-center justify-center font-bold text-lg leading-none hover:opacity-80">+</button>
                     </label>
                     <div className="flex flex-col gap-2">
@@ -1389,7 +1389,7 @@ export default function AdminPanel({
 
                   <div className="flex flex-col gap-1.5 sm:col-span-4">
                     <label className="text-xs text-stone-300 flex justify-between items-center">
-                      <span>Show Time(s)</span>
+                      <span>{t('admin.showTimesLabel')}</span>
                       <button type="button" onClick={() => setShowForm({ ...showForm, times: [...showForm.times, "18:30"] })} className="bg-[#C5A059] text-black w-4 h-4 rounded-full flex items-center justify-center font-bold text-lg leading-none hover:opacity-80">+</button>
                     </label>
                     <div className="flex flex-col gap-2">
@@ -1493,7 +1493,7 @@ export default function AdminPanel({
                   </div>
 
                   <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <label className="text-xs text-stone-300">Base Price (INR)</label>
+                    <label className="text-xs text-stone-300">{t('admin.basePriceLabel')}</label>
                     <input
                       type="number"
                       required
@@ -1515,7 +1515,7 @@ export default function AdminPanel({
                     onClick={() => setIsEditingShow(false)}
                     className="px-4 py-2 bg-transparent text-stone-400 hover:bg-stone-800 rounded-xl text-sm cursor-pointer"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -1657,7 +1657,7 @@ export default function AdminPanel({
               {groupedShows.length === 0 && (
                 <div className="col-span-full border border-stone-840 border-dashed rounded-3xl py-16 text-center text-stone-500">
                   <CalendarDays className="w-8 h-8 mx-auto text-stone-600 mb-2 animate-pulse" />
-                  <span>No scheduled movie shows in database. Create one above to load listings.</span>
+                  <span>{t('admin.noScheduledShows')}</span>
                 </div>
               )}
             </div>
@@ -1670,10 +1670,10 @@ export default function AdminPanel({
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
                 <h2 className="text-3xl font-sans font-bold tracking-tight text-stone-100">
-                  Audited Booking Logs
+                  {t('admin.auditedBookingLogs')}
                 </h2>
                 <p className="text-stone-400 text-sm mt-1">
-                  A robust list of customer seat payments, tickets generated, and cancel transactions.
+                  {t('admin.bookingLogsDesc')}
                 </p>
               </div>
               <button
@@ -1682,7 +1682,7 @@ export default function AdminPanel({
                 className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.08)]"
               >
                 <ListOrdered className="w-4 h-4" />
-                Waiting Queue Details
+                {t('admin.waitingQueueDetails')}
                 {waitingQueueEntries.length > 0 && (
                   <span className="ml-1 bg-amber-500 text-stone-900 text-[10px] font-black px-1.5 py-0.5 rounded-full">
                     {waitingQueueEntries.length}
@@ -1696,13 +1696,13 @@ export default function AdminPanel({
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="bg-stone-900 border-b border-stone-800/80 text-stone-400 font-mono text-xs uppercase tracking-wider">
-                      <th className="py-4 px-5">Booking ID</th>
-                      <th className="py-4 px-5">Viewer/Guest</th>
-                      <th className="py-4 px-5">Movie / Theatre</th>
-                      <th className="py-4 px-5">Time Slot</th>
-                      <th className="py-4 px-5">Seats (Count)</th>
-                      <th className="py-4 px-5 text-right">Amount</th>
-                      <th className="py-4 px-5 text-center">Payment</th>
+                      <th className="py-4 px-5">{t('admin.bookingIdHeader')}</th>
+                      <th className="py-4 px-5">{t('admin.viewerGuestHeader')}</th>
+                      <th className="py-4 px-5">{t('admin.movieTheatreHeader')}</th>
+                      <th className="py-4 px-5">{t('admin.timeSlotHeader')}</th>
+                      <th className="py-4 px-5">{t('admin.seatsCountHeader')}</th>
+                      <th className="py-4 px-5 text-right">{t('admin.amountHeader')}</th>
+                      <th className="py-4 px-5 text-center">{t('admin.paymentHeader')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-800 pb-4">
@@ -1762,7 +1762,7 @@ export default function AdminPanel({
                                   : "bg-yellow-950/20 text-yellow-500 border-yellow-500/20"
                               }`}
                           >
-                            {booking.isCancelled ? "CANCELLED" : booking.paymentStatus}
+                            {booking.isCancelled ? t('admin.cancelledLabel') : booking.paymentStatus}
                           </span>
                         </td>
                       </tr>
@@ -1775,7 +1775,7 @@ export default function AdminPanel({
                           className="py-12 text-center text-stone-500 border-t border-stone-800"
                         >
                           <Receipt className="w-8 h-8 mx-auto text-stone-700 mb-2" />
-                          <span>No bookings logged yet. Both online user and offline counter bookings appear here.</span>
+                          <span>{t('admin.noBookingsLogged')}</span>
                         </td>
                       </tr>
                     )}
@@ -1815,7 +1815,7 @@ export default function AdminPanel({
                   className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl text-sm flex items-center gap-2 transition-transform hover:scale-103 cursor-pointer shadow-lg"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Food Item
+                  {t('admin.addFoodItem')}
                 </button>
               )}
             </div>
@@ -1826,7 +1826,7 @@ export default function AdminPanel({
                 onSubmit={async (e) => {
                   e.preventDefault();
                   if (!foodForm.name || foodForm.price <= 0 || !foodForm.imageUrl) {
-                    alert("Please provide the food item name, valid price, and image.");
+                    alert(t('admin.foodFormIncomplete'));
                     return;
                   }
                   if (foodForm.id) {
@@ -1839,12 +1839,12 @@ export default function AdminPanel({
                 className="p-6 bg-stone-900/50 border border-stone-800 rounded-2xl flex flex-col gap-4 relative max-w-2xl"
               >
                 <h3 className="text-lg font-bold text-stone-200">
-                  {foodForm.id ? "Update Food Entry" : "Add Fresh Food Entry"}
+                  {foodForm.id ? t('admin.updateFoodEntry') : t('admin.addFreshFoodEntry')}
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-stone-400">Food Name</label>
+                    <label className="text-xs text-stone-400">{t('admin.foodNameLabel')}</label>
                     <input
                       type="text"
                       required
@@ -1854,7 +1854,7 @@ export default function AdminPanel({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-stone-400">Price (INR)</label>
+                    <label className="text-xs text-stone-400">{t('admin.priceINRLabel')}</label>
                     <input
                       type="number"
                       required
@@ -1868,7 +1868,7 @@ export default function AdminPanel({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-stone-400">Category</label>
+                    <label className="text-xs text-stone-400">{t('admin.categoryLabel')}</label>
                     <select
                       value={foodForm.category}
                       onChange={(e) => setFoodForm({ ...foodForm, category: e.target.value })}
@@ -1881,21 +1881,21 @@ export default function AdminPanel({
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-stone-400">Assign to Theatre</label>
+                    <label className="text-xs text-stone-400">{t('admin.assignToTheatreLabel')}</label>
                     <select
                       value={foodForm.theatreId || ""}
                       onChange={(e) => setFoodForm({ ...foodForm, theatreId: e.target.value })}
                       className="px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-stone-200 text-sm outline-none"
                     >
-                      <option value="">All Theatres (Global)</option>
+                      <option value="">{t('admin.allTheatresGlobal')}</option>
                       {theatres.map((t) => (
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
                     </select>
-                    <span className="text-[10px] text-stone-500 italic">Empty = available at all theatres.</span>
+                    <span className="text-[10px] text-stone-500 italic">{t('admin.emptyAvailableAllTheatres')}</span>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs text-stone-400 font-mono">Food Image</label>
+                    <label className="text-xs text-stone-400 font-mono">{t('admin.foodImageLabel')}</label>
                     <div className="flex flex-row items-start gap-3">
                       {foodForm.imageUrl && (
                         <img
@@ -1910,7 +1910,7 @@ export default function AdminPanel({
                           onChange={(e) => handleBase64Upload(e, (url) => setFoodForm({ ...foodForm, imageUrl: url }))}
                           className="text-xs text-stone-300 bg-stone-950 p-2 rounded-xl border border-stone-800 w-full"
                         />
-                        <span className="text-[10px] text-stone-500 italic">OR input URL address directly:</span>
+                        <span className="text-[10px] text-stone-500 italic">{t('admin.orInputUrl')}</span>
                         <input
                           type="text"
                           placeholder="https://images.unsplash.com/..."

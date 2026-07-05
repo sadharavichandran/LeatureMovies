@@ -7,6 +7,7 @@ const foodController = {
       if (!foodData.name || foodData.price === undefined || !foodData.imageUrl) {
         return res.status(400).json({ error: 'Name, price, and imageUrl are required.' });
       }
+      foodData.adminId = req.user.id;
       const food = await Food.create(foodData);
       res.json({ message: 'Food item created successfully', food });
     } catch (error) {
@@ -17,7 +18,11 @@ const foodController = {
 
   async getAll(req, res) {
     try {
-      const foods = await Food.getAll();
+      let adminId = null;
+      if (req.user && req.user.role === 'admin') {
+        adminId = req.user.id;
+      }
+      const foods = await Food.getAll(adminId);
       res.json({ foods });
     } catch (error) {
       console.error(error);
@@ -27,8 +32,12 @@ const foodController = {
 
   async getByTheatre(req, res) {
     try {
+      let adminId = null;
+      if (req.user && req.user.role === 'admin') {
+        adminId = req.user.id;
+      }
       const { theatreId } = req.params;
-      const foods = await Food.getByTheatre(theatreId);
+      const foods = await Food.getByTheatre(theatreId, adminId);
       res.json({ foods });
     } catch (error) {
       console.error(error);
@@ -56,6 +65,14 @@ const foodController = {
         console.error('[DEBUG] Invalid food id received.');
         return res.status(400).json({ error: 'Invalid food id.' });
       }
+      const existingFood = await Food.findById(req.params.id);
+      if (!existingFood) {
+        return res.status(404).json({ error: 'Food item not found' });
+      }
+      if (req.user.role === 'admin' && existingFood.adminId !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       const food = await Food.update(req.params.id, req.body);
       if (!food) {
         return res.status(404).json({ error: 'Food item not found' });
@@ -74,6 +91,14 @@ const foodController = {
         console.error('[DEBUG] Invalid food id. Aborting delete.');
         return res.status(400).json({ error: 'Invalid food id. Aborting delete.' });
       }
+      const existingFood = await Food.findById(req.params.id);
+      if (!existingFood) {
+        return res.status(404).json({ error: 'Food item not found' });
+      }
+      if (req.user.role === 'admin' && existingFood.adminId !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       await Food.delete(req.params.id);
       res.json({ message: 'Food item deleted successfully' });
     } catch (error) {

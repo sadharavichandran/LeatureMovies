@@ -1,11 +1,11 @@
 import express from 'express';
 import foodController from '../controllers/foodController.js';
-import { authMiddleware, adminMiddleware } from '../middleware/auth.js';
+import { authMiddleware, adminMiddleware, optionalAuthMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', foodController.getAll);
-router.get('/theatre/:theatreId', foodController.getByTheatre);
+router.get('/', optionalAuthMiddleware, foodController.getAll);
+router.get('/theatre/:theatreId', optionalAuthMiddleware, foodController.getByTheatre);
 router.get('/:id', foodController.getById);
 router.post('/', authMiddleware, adminMiddleware, foodController.create);
 router.put('/:id', authMiddleware, adminMiddleware, foodController.update);

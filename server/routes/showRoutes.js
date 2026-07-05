@@ -1,10 +1,10 @@
 import express from 'express';
 import showController from '../controllers/showController.js';
-import { authMiddleware, adminMiddleware } from '../middleware/auth.js';
+import { authMiddleware, adminMiddleware, optionalAuthMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', showController.getAll);
+router.get('/', optionalAuthMiddleware, showController.getAll);
 router.get('/:id', showController.getById);
 router.post('/', authMiddleware, adminMiddleware, showController.create);
 router.post('/:id/book-seats', authMiddleware, showController.bookSeats);

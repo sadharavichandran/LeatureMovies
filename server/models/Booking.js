@@ -34,6 +34,7 @@ const BookingSchema = new Schema(
     bookingDate: { type: Date, default: Date.now },
     coinsEarned: { type: Number, default: 0 },
     coinsUsed: { type: Number, default: 0 },
+    adminId: { type: String, default: null },
   },
   { timestamps: true }
 );
@@ -74,8 +75,9 @@ class Booking {
     });
   }
 
-  static async getAll() {
-    const docs = await BookingModel.find().sort({ bookingDate: -1 }).lean();
+  static async getAll(adminId = null) {
+    const query = adminId ? { adminId } : {};
+    const docs = await BookingModel.find(query).sort({ bookingDate: -1 }).lean();
     return docs.map((d) => {
       d.id = d._id;
       delete d._id;

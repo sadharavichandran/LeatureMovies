@@ -1,4 +1,5 @@
 import Booking from '../models/Booking.js';
+import Show from '../models/Show.js';
 import User from '../models/User.js';
 import WaitingQueue from '../models/WaitingQueue.js';
 
@@ -8,7 +9,10 @@ const bookingController = {
       const coinsEarned = (req.body.seatNumbers?.length || 0) * 5;
       const coinsUsed = req.body.coinsUsed || 0;
       
-      const bookingData = { ...req.body, userId: req.user.id, coinsEarned, coinsUsed };
+      const show = await Show.findById(req.body.showId);
+      const adminId = show ? show.adminId : null;
+      
+      const bookingData = { ...req.body, userId: req.user.id, coinsEarned, coinsUsed, adminId };
       const booking = await Booking.create(bookingData);
       
       // Update user coins
@@ -47,7 +51,11 @@ const bookingController = {
 
   async getAll(req, res) {
     try {
-      const bookings = await Booking.getAll();
+      let adminId = null;
+      if (req.user && req.user.role === 'admin') {
+        adminId = req.user.id;
+      }
+      const bookings = await Booking.getAll(adminId);
       res.json({ bookings });
     } catch (error) {
       console.error(error);
@@ -73,8 +81,12 @@ const bookingController = {
       }
 
       // Check if user owns this booking or is admin
-      if (booking.userId !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Unauthorized' });
+      if (booking.userId !== req.user.id) {
+        if (req.user.role === 'admin' && booking.adminId !== req.user.id) {
+          return res.status(403).json({ error: 'Unauthorized' });
+        } else if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+          return res.status(403).json({ error: 'Unauthorized' });
+        }
       }
 
       res.json({ booking });
@@ -91,8 +103,12 @@ const bookingController = {
         return res.status(404).json({ error: 'Booking not found' });
       }
 
-      if (booking.userId !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Unauthorized' });
+      if (booking.userId !== req.user.id) {
+        if (req.user.role === 'admin' && booking.adminId !== req.user.id) {
+          return res.status(403).json({ error: 'Unauthorized' });
+        } else if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+          return res.status(403).json({ error: 'Unauthorized' });
+        }
       }
 
       const updatedBooking = await Booking.update(req.params.id, req.body);
@@ -126,6 +142,12 @@ const bookingController = {
   async delete(req, res) {
     try {
       const booking = await Booking.findById(req.params.id);
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      if (req.user.role === 'admin' && booking.adminId !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
       await Booking.delete(req.params.id);
       
       if (booking) {
