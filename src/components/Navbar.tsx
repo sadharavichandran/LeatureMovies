@@ -7,7 +7,7 @@ interface NavbarProps {
   currentUser: UserProfile | null;
   onLogout: () => void;
   onOpenAuth: (role: "user" | "admin", isRegister: boolean) => void;
-  onNavigate: (view: "home" | "admin" | "user" | "theatres" | "user-lostfound" | "watch-room") => void;
+  onNavigate: (view: "home" | "admin" | "superadmin" | "user" | "theatres" | "user-lostfound" | "watch-room") => void;
   currentView: string;
 }
 
