@@ -12,6 +12,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import waitingQueueRoutes from './routes/waitingQueueRoutes.js';
 import watchRoomRoutes from './routes/watchRoomRoutes.js';
 import trailerRoutes from './routes/trailerRoutes.js';
+import guideRoutes from './routes/guideRoutes.js';
 
 import http from 'http';
 import { initSocket } from './socket.js';
@@ -40,7 +41,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/waiting-queue', waitingQueueRoutes);
 app.use('/api/watch-room', watchRoomRoutes);
 app.use('/api/trailers', trailerRoutes);
-
+app.use('/api/guide', guideRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

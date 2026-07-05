@@ -312,3 +312,11 @@ export const trailerService = {
 
   searchTrailers: (query: string) => apiCall(`/trailers/search?q=${encodeURIComponent(query)}`),
 };
+
+export const guideService = {
+  askQuestion: (question: string, history?: any[], context?: any) =>
+    apiCall('/guide/ask', {
+      method: 'POST',
+      body: JSON.stringify({ question, history, context }),
+    }),
+};
