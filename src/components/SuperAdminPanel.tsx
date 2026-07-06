@@ -71,15 +71,17 @@ export default function SuperAdminPanel({ theatres: propTheatres }: SuperAdminPa
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [usersRes, reviewsRes, theatresRes, bookingsRes, moviesRes, showsRes] =
+        const [usersRes, theatreReviews, platformReviews, theatresRes, bookingsRes, moviesRes, showsRes] =
           await Promise.all([
             authService.getAllUsers(),
             reviewService.getAllTheatreReviews(),
+            reviewService.getAllPlatformReviews(),
             theatreService.getAll(),
             bookingService.getAll(),
             movieService.getAll(),
             showService.getAll(),
           ]);
+        const reviewsRes = { reviews: [...(theatreReviews.reviews || []), ...(platformReviews.reviews || [])] };
         const adminUsers = (usersRes.users || []).filter(
           (u: UserProfile) => u.role === "admin"
         );

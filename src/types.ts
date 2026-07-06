@@ -23,6 +23,7 @@ export interface Movie {
   totalRatings?: number;
   totalReviews?: number;
   ratingDistribution?: Record<string, number>;
+  adminId?: string;
 }
 
 export interface Theatre {
@@ -43,6 +44,7 @@ export interface Theatre {
   vipRows?: number;
   premiumRows?: number;
   createdAt: string;
+  adminId?: string;
 }
 
 export interface Show {
@@ -70,6 +72,7 @@ export interface Show {
   premiumRows?: number;
   createdAt: string;
   isCancelled: boolean;
+  adminId?: string;
 }
 
 export interface Booking {
@@ -103,6 +106,7 @@ export interface Booking {
   coinsEarned?: number;
   coinsUsed?: number;
   source?: "online" | "offline"; // "online" = user booking, "offline" = seat locker counter
+  adminId?: string;
 }
 
 export interface BankingDetails {

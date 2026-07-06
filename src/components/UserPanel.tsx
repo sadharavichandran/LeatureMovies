@@ -33,10 +33,10 @@ export default function UserPanel({
 
   // Helper to handle print/download stub
   const triggerPrintStub = (bookingId: string, displayId: string) => {
-    const originalContent = document.body.innerHTML;
     const printElement = document.getElementById(`ticket-stub-${bookingId}`);
-    if (printElement) {
-      const printHtml = printElement.innerHTML;
+    const qrElement = document.getElementById(`qr-svg-${bookingId}`);
+    if (printElement && qrElement) {
+      const qrHtml = qrElement.outerHTML;
       const win = window.open("", "_blank");
       if (win) {
         win.document.write(`
@@ -46,25 +46,26 @@ export default function UserPanel({
               <style>
                 body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 40px; }
                 .ticket-box { border: 2px dashed #f59e0b; padding: 30px; display: inline-block; border-radius: 16px; background: #111; }
-                img { max-width: 140px; border-radius: 8px; margin-bottom: 12px; }
+                img.poster { max-width: 140px; border-radius: 8px; margin-bottom: 12px; }
                 .title { font-weight: bold; font-size: 24px; color: #f59e0b; margin-bottom: 6px; }
                 .meta { font-size: 14px; margin-bottom: 15px; color: #999; }
                 .seats { font-size: 18px; font-weight: bold; letter-spacing: 2px; color: #fff; background: #222; padding: 6px 12px; display: inline-block; border-radius: 6px; }
-                .qr { margin-top: 15px; width: 150px; height: 150px; }
+                .qr { margin-top: 15px; display: flex; justify-content: center; }
+                .qr svg { width: 150px; height: 150px; padding: 8px; background: white; border-radius: 8px; }
               </style>
             </head>
             <body>
               <div class="ticket-box">
                 <div class="title">LEATURE MOVIES</div>
                 <div class="meta">Cinema Boarding Pass</div>
-                <img src="${printElement.getAttribute("data-poster")}" />
+                <img class="poster" src="${printElement.getAttribute("data-poster")}" />
                 <div class="title">${printElement.getAttribute("data-title")}</div>
                 <div>Theatre: ${printElement.getAttribute("data-theatre")} (Screen ${printElement.getAttribute("data-screen")})</div>
                 <div>Date: ${printElement.getAttribute("data-date")} at ${printElement.getAttribute("data-time")}</div>
                 <div style="margin-top:20px;">Seats:</div>
                 <div class="seats">${printElement.getAttribute("data-seats")}</div>
                 ${printElement.getAttribute("data-food-summary") ? `<div style="margin-top:15px; font-weight:bold; color:#f59e0b;">Food Pre-order:</div><div style="font-size:14px; color:#ddd; margin-top:5px;">${printElement.getAttribute("data-food-summary")}</div>` : ""}
-                <div><img class="qr" src="${printElement.getAttribute("data-qr")}" /></div>
+                <div class="qr">${qrHtml}</div>
                 <div style="font-size:10px; color:#555; margin-top:15px;">REF ID: ${displayId}</div>
               </div>
             </body>
@@ -72,7 +73,7 @@ export default function UserPanel({
         `);
         win.document.close();
         win.focus();
-        win.print();
+        setTimeout(() => win.print(), 100);
       }
     }
   };
@@ -136,6 +137,7 @@ export default function UserPanel({
               ? booking.foodOrderItems!.map((f) => `${f.quantity}x ${f.foodName}`).join(", ")
               + (booking.foodDeliveryOption === 'seat' ? ' [Delivery to Seat]' : ' [Counter Pickup]')
               : "";
+            const qrCodeText = `Booking ID: ${displayId}\nMovie: ${booking.movieTitle}\nTheatre: ${booking.theatreName} (Screen ${booking.screenNumber})\nDate: ${booking.showDate.split('T')[0]}\nTime: ${booking.showTime}\nSeats: ${seatsList}`;
 
             return (
               <div
@@ -286,7 +288,8 @@ export default function UserPanel({
                     <>
                       <div className="p-1 bg-white rounded shadow-md mx-auto inline-block">
                         <QRCodeSVG
-                          value={displayId}
+                          id={`qr-svg-${booking.id}`}
+                          value={qrCodeText}
                           size={70}
                           bgColor="#ffffff"
                           fgColor="#000000"

@@ -246,7 +246,7 @@ export const lostFoundService = {
 };
 
 export const reviewService = {
-  submitReview: (reviewData: { targetId: string; targetType: 'Movie' | 'Theatre'; rating: number; comment?: string }) =>
+  submitReview: (reviewData: { targetId: string; targetType: 'Movie' | 'Theatre' | 'Platform'; rating: number; comment?: string }) =>
     apiCall('/reviews', {
       method: 'POST',
       body: JSON.stringify(reviewData),
@@ -256,6 +256,7 @@ export const reviewService = {
       method: 'DELETE',
     }),
   getAllTheatreReviews: () => apiCall('/reviews/theatres'),
+  getAllPlatformReviews: () => apiCall('/reviews/platform'),
   getTargetReviews: (targetId: string) => apiCall(`/reviews/${targetId}`),
 };
 

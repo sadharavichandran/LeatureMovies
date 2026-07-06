@@ -5,7 +5,7 @@ const reviewSchema = new mongoose.Schema({
   _id: { type: String, default: uuidv4 },
   targetType: {
     type: String,
-    enum: ['Movie', 'Theatre'],
+    enum: ['Movie', 'Theatre', 'Platform'],
     required: true,
   },
   targetId: {

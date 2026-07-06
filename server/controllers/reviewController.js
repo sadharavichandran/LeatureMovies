@@ -3,6 +3,9 @@ import Movie from '../models/Movie.js';
 import User from '../models/User.js';
 
 const updateTargetStats = async (targetId, targetType, req) => {
+  if (targetType === 'Platform') {
+    return null;
+  }
   // We'll just handle Movie here as requested, or keep Theatre if needed later
   const Model = Movie; // Actually let's assume Movie for now, user only requested Movie.
   const reviews = await Review.find({ targetId });
@@ -104,5 +107,15 @@ export const getAllTheatreReviews = async (req, res) => {
   } catch (error) {
     console.error("Get theatre reviews error:", error);
     res.status(500).json({ success: false, message: "Failed to fetch theatre reviews" });
+  }
+};
+
+export const getAllPlatformReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({ targetType: 'Platform' }).sort({ createdAt: -1 });
+    res.json({ success: true, reviews });
+  } catch (error) {
+    console.error("Get platform reviews error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch platform reviews" });
   }
 };

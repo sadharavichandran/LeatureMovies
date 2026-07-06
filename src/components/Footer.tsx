@@ -1,5 +1,7 @@
-import { Mail, Phone, Globe } from "lucide-react";
+import React, { useState } from 'react';
+import { Mail, Phone, Globe, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import PlatformReviewModal from './PlatformReviewModal';
 
 interface FooterProps {
   onNavigateHome: () => void;
@@ -8,11 +10,12 @@ interface FooterProps {
 export default function Footer({ onNavigateHome }: FooterProps) {
   const { t } = useTranslation();
   const year = new Date().getFullYear();
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   return (
     <footer className="bg-[#050505] border-t border-white/5 pt-16 pb-8 text-stone-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
           {/* Brand/Slogan */}
           <div className="flex flex-col gap-4">
             <div onClick={onNavigateHome} className="flex items-center gap-3 cursor-pointer select-none group">
@@ -23,48 +26,6 @@ export default function Footer({ onNavigateHome }: FooterProps) {
             </p>
           </div>
 
-          {/* Locations */}
-          <div>
-            <h3 className="text-stone-100 font-serif font-semibold text-xs tracking-widest uppercase mb-4 text-[#C5A059]">
-              {t('footer.ourLocations')}
-            </h3>
-            <ul className="flex flex-col gap-3 text-xs">
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <span>{t('footer.location1')}</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <span>{t('footer.location2')}</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <span>{t('footer.location3')}</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Quick links */}
-          <div>
-            <h3 className="text-stone-100 font-serif font-semibold text-xs tracking-widest uppercase mb-4 text-[#C5A059]">
-              {t('footer.quickShortcuts')}
-            </h3>
-            <ul className="flex flex-col gap-3 text-xs">
-              <li>
-                <button type="button" onClick={onNavigateHome} className="hover:text-[#C5A059] transition-colors text-left">
-                  {t('footer.nowShowing')}
-                </button>
-              </li>
-              <li>
-                <span className="text-stone-500 text-xs">{t('footer.upcomingSoon')}</span>
-              </li>
-              <li>
-                <span className="hover:text-[#C5A059] transition-colors cursor-pointer text-left">
-                  {t('footer.corporateBooking')}
-                </span>
-              </li>
-            </ul>
-          </div>
 
           {/* Contact */}
           <div>
@@ -81,6 +42,9 @@ export default function Footer({ onNavigateHome }: FooterProps) {
               <a href="https://www.leaturetech.com" target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-[#C5A059] hover:border-[#C5A059]/30 transition-all shadow-md cursor-pointer flex items-center justify-center text-stone-400" title="Website: www.leaturetech.com">
                 <Globe className="w-5 h-5" />
               </a>
+              <button type="button" onClick={() => setShowReviewModal(true)} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-[#C5A059] hover:border-[#C5A059]/30 transition-all shadow-md cursor-pointer flex items-center justify-center text-stone-400" title="Submit App Feedback">
+                <MessageSquare className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -94,6 +58,7 @@ export default function Footer({ onNavigateHome }: FooterProps) {
           </div>
         </div>
       </div>
+      {showReviewModal && <PlatformReviewModal onClose={() => setShowReviewModal(false)} />}
     </footer>
   );
 }
